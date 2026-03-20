@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sage — Speak Your Unsaid</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sage:#8aab8e;--sage-light:#b2ceb5;--sage-deep:#5a7d5e;--sage-dark:#3a5a3e;
+  --tw:rgba(15,42,18,0.97);--ts:rgba(22,58,25,0.82);--tm:rgba(35,72,38,0.62);
+  --lg-blur: blur(32px) saturate(180%);
+  --lg-shadow: 0 8px 32px rgba(80,120,85,0.18), 0 1px 0 rgba(255,255,255,0.45) inset, 0 -1px 0 rgba(100,140,105,0.12) inset;
+  --lg-shadow-sm: 0 4px 18px rgba(80,120,85,0.14), 0 1px 0 rgba(255,255,255,0.38) inset;
+  --nav-w: 76px;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{
+  font-family:'DM Sans',sans-serif;
+  background: #b8cebc;
+  color:var(--tw);
+  position:relative;
+}
+
+/* ── AMBIENT BLOBS ── */
+.blob-layer{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;}
+.blob{position:absolute;border-radius:50%;filter:blur(0px);}
+.blob1{width:72vw;height:72vw;background:radial-gradient(circle at 40% 35%,#ddeedd 0%,#a8c9aa 40%,#7faa83 100%);top:-20vw;left:-15vw;animation:bm1 22s ease-in-out infinite alternate;}
+.blob2{width:55vw;height:55vw;background:radial-gradient(circle at 55% 55%,#c8deca 0%,#9dbfa0 45%,#6e9b72 100%);bottom:-18vw;right:-10vw;animation:bm2 28s ease-in-out infinite alternate;}
+.blob3{width:40vw;height:40vw;background:radial-gradient(circle at 50% 50%,#e2ede3 0%,#b5cdb7 55%,#8aab8e 100%);top:30%;left:40%;animation:bm3 18s ease-in-out infinite alternate;}
+@keyframes bm1{from{transform:translate(0,0) scale(1)}to{transform:translate(6vw,4vh) scale(1.08)}}
+@keyframes bm2{from{transform:translate(0,0) scale(1)}to{transform:translate(-5vw,-6vh) scale(1.12)}}
+@keyframes bm3{from{transform:translate(0,0) scale(1) rotate(0deg)}to{transform:translate(-4vw,5vh) scale(0.9) rotate(20deg)}}
+
+/* ── LIQUID GLASS ── */
+.glass{
+  background:rgba(220,238,222,0.35);
+  border:1px solid rgba(255,255,255,0.55);
+  backdrop-filter:blur(28px) saturate(160%);
+  -webkit-backdrop-filter:blur(28px) saturate(160%);
+  box-shadow:0 8px 32px rgba(80,120,85,0.16), 0 1px 0 rgba(255,255,255,0.6) inset, 0 -1px 0 rgba(100,140,105,0.1) inset;
+  position:relative;
+  overflow:hidden;
+}
+/* Inner shine streak */
+.glass::before{
+  content:'';
+  position:absolute;top:0;left:0;right:0;height:40%;
+  background:linear-gradient(180deg, rgba(255,255,255,0.28) 0%, rgba(255,255,255,0.04) 100%);
+  border-radius:inherit;
+  pointer-events:none;z-index:0;
+}
+/* Edge refraction ring */
+.glass::after{
+  content:'';
+  position:absolute;inset:0;
+  border-radius:inherit;
+  border:1px solid rgba(255,255,255,0.22);
+  pointer-events:none;z-index:0;
+}
+.glass > *{position:relative;z-index:1;}
+
+.glass-sm{
+  background:rgba(195,225,198,0.62);
+  border:1px solid rgba(255,255,255,0.65);
+  backdrop-filter:blur(22px) saturate(150%);
+  -webkit-backdrop-filter:blur(22px) saturate(150%);
+  box-shadow:0 4px 18px rgba(80,120,85,0.13), 0 1px 0 rgba(255,255,255,0.65) inset;
+  position:relative;overflow:hidden;
+}
+.glass-sm::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:40%;
+  background:linear-gradient(180deg,rgba(255,255,255,0.3) 0%,transparent 100%);
+  pointer-events:none;
+}
+.glass-sm > *{position:relative;z-index:1;}
+
+/* ── LAYOUT ── */
+.app{position:fixed;inset:0;z-index:1;display:flex;}
+.page{position:absolute;inset:0;inset-left:var(--nav-w);display:flex;flex-direction:column;transition:opacity 0.5s ease,transform 0.5s ease;}
+.page.hidden{opacity:0;pointer-events:none;transform:translateY(12px) scale(0.985);}
+
+/* When nav is visible, pages shift right */
+.nav-active .page:not(#loginPage){left:var(--nav-w);}
+
+/* ── VERTICAL SIDEBAR NAV ── */
+.sidenav{
+  position:fixed;left:0;top:0;bottom:0;
+  width:var(--nav-w);
+  display:flex;flex-direction:column;align-items:center;
+  padding:1.4rem 0;gap:0.5rem;
+  z-index:100;
+  background:rgba(168,200,171,0.45);
+  border-right:1px solid rgba(255,255,255,0.38);
+  backdrop-filter:blur(28px) saturate(150%);
+  -webkit-backdrop-filter:blur(28px) saturate(150%);
+  box-shadow:2px 0 24px rgba(80,120,85,0.14), inset -1px 0 0 rgba(255,255,255,0.25);
+  transition:transform 0.4s ease;
+}
+.sidenav.hidden{transform:translateX(-100%);}
+.sidenav-logo{
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:0.6rem;
+  filter: drop-shadow(0 2px 6px rgba(80,120,85,0.22));
+}
+.sidenav-divider{width:36px;height:1px;background:rgba(80,120,85,0.2);margin:0.4rem 0;}
+.snav-btn{
+  display:flex;flex-direction:column;align-items:center;gap:0.3rem;
+  width:56px;padding:0.7rem 0;border-radius:18px;
+  background:transparent;border:1px solid transparent;
+  cursor:pointer;transition:all 0.25s;
+  color:rgba(35,65,38,0.65);font-size:0.58rem;letter-spacing:0.05em;
+  font-family:'DM Sans',sans-serif;
+}
+.snav-btn .sn-icon{font-size:1.3rem;line-height:1;transition:transform 0.25s;}
+.snav-btn:hover,.snav-btn.active{
+  background:rgba(255,255,255,0.4);
+  border-color:rgba(255,255,255,0.6);
+  color:rgba(25,55,28,0.95);
+  box-shadow:0 2px 12px rgba(80,120,85,0.15), inset 0 1px 0 rgba(255,255,255,0.5);
+}
+.snav-btn:hover .sn-icon{transform:scale(1.12);}
+.snav-btn.active{background:rgba(255,255,255,0.5);border-color:rgba(255,255,255,0.7);font-weight:600;}
+.snav-bottom{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:0.5rem;}
+.snav-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(180,215,183,0.7),rgba(130,170,133,0.6));
+  border:1.5px solid rgba(255,255,255,0.65);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;cursor:pointer;transition:all 0.2s;
+  box-shadow:0 2px 12px rgba(80,120,85,0.18), inset 0 1px 0 rgba(255,255,255,0.45);
+}
+.snav-avatar:hover{transform:scale(1.08);}
+
+/* ── CONTENT AREA ── */
+.content-area{
+  flex:1;display:flex;flex-direction:column;
+  margin-left:0;transition:margin-left 0.4s ease;
+}
+.nav-active .content-area{margin-left:var(--nav-w);}
+
+/* ── SCROLL ── */
+.scroll-content{flex:1;overflow-y:auto;padding:1.5rem;scrollbar-width:thin;scrollbar-color:rgba(180,220,183,0.25) transparent;}
+.scroll-content::-webkit-scrollbar{width:4px;}
+.scroll-content::-webkit-scrollbar-thumb{background:rgba(180,220,183,0.25);border-radius:4px;}
+
+/* ── ANIMATIONS ── */
+@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.42}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pop{0%{transform:scale(0.82);opacity:0}75%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes wave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(0.38)}}
+
+/* ── BUTTONS ── */
+.btn{font-family:'DM Sans',sans-serif;border:none;cursor:pointer;transition:all 0.28s;border-radius:50px;font-weight:500;letter-spacing:0.05em;}
+.btn-primary{
+  background:linear-gradient(135deg,rgba(100,150,103,0.75),rgba(70,115,73,0.65));
+  border:1px solid rgba(255,255,255,0.45);
+  color:#fff;padding:0.85rem 2rem;font-size:0.9rem;
+  box-shadow:0 4px 20px rgba(70,110,75,0.28),inset 0 1px 0 rgba(255,255,255,0.35);
+  backdrop-filter:blur(12px);
+}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(60,110,65,0.4),inset 0 1px 0 rgba(255,255,255,0.32);}
+.btn-secondary{
+  background:rgba(190,220,193,0.45);
+  border:1px solid rgba(255,255,255,0.5);
+  color:rgba(35,65,38,0.82);padding:0.85rem 2rem;font-size:0.9rem;
+  backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.btn-secondary:hover{background:rgba(200,230,203,0.6);color:rgba(25,55,28,0.95);}
+.btn-sm{padding:0.5rem 1.2rem;font-size:0.78rem;}
+.btn-icon{
+  width:38px;height:38px;border-radius:14px;
+  background:rgba(180,215,183,0.45);
+  border:1px solid rgba(255,255,255,0.5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;cursor:pointer;transition:all 0.2s;
+  backdrop-filter:blur(12px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);
+}
+.btn-icon:hover{background:rgba(200,230,203,0.6);transform:scale(1.05);}
+
+/* ── INPUTS ── */
+.input-field{
+  width:100%;background:rgba(220,238,222,0.55);
+  border:1px solid rgba(255,255,255,0.55);
+  border-radius:14px;padding:0.85rem 1.1rem;
+  color:rgba(25,55,28,0.9);font-family:'DM Sans',sans-serif;font-size:0.9rem;
+  outline:none;backdrop-filter:blur(14px);transition:border-color 0.2s,box-shadow 0.2s;
+  box-shadow:inset 0 1px 3px rgba(0,0,0,0.08);
+}
+.input-field::placeholder{color:rgba(80,120,85,0.45);}
+.input-field:focus{border-color:rgba(100,155,103,0.7);box-shadow:0 0 0 3px rgba(138,171,142,0.2),inset 0 1px 3px rgba(80,120,85,0.08);}
+.input-label{font-size:0.75rem;letter-spacing:0.08em;color:rgba(50,90,53,0.7);margin-bottom:0.4rem;display:block;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:2rem;left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:rgba(168,200,171,0.7);
+  border:1px solid rgba(255,255,255,0.55);
+  backdrop-filter:blur(24px);border-radius:50px;
+  padding:0.65rem 1.5rem;color:rgba(25,55,28,0.92);
+  font-size:0.8rem;letter-spacing:0.05em;
+  z-index:999;opacity:0;transition:all 0.4s;pointer-events:none;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(40,90,45,0.25),inset 0 1px 0 rgba(255,255,255,0.18);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ═══════════════════════════════
+   LOGIN PAGE
+═══════════════════════════════ */
+#loginPage{align-items:center;justify-content:center;overflow-y:auto;left:0!important;}
+.login-hero{display:flex;flex-direction:column;align-items:center;padding:3rem 1rem 2rem;animation:fadeUp 0.9s ease both;}
+.login-logo{
+  font-family:'Cormorant Garamond',serif;
+  font-size:clamp(4.5rem,13vw,9rem);font-weight:300;letter-spacing:0.2em;
+  color:rgba(25,60,28,0.96);
+  text-shadow:0 4px 40px rgba(60,110,65,0.4),0 1px 0 rgba(255,255,255,0.35);
+  line-height:1;margin-bottom:0.15em;
+}
+.login-tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:clamp(0.95rem,2.5vw,1.35rem);color:rgba(50,90,53,0.68);letter-spacing:0.1em;}
+.login-cards{display:flex;gap:1.2rem;padding:0 1.5rem 3rem;flex-wrap:wrap;justify-content:center;animation:fadeUp 0.9s 0.2s ease both;}
+.login-card{padding:2.2rem 2rem;display:flex;flex-direction:column;gap:1.1rem;width:340px;border-radius:28px;}
+.login-card-title{font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:400;color:rgba(10,40,13,0.97);}
+.anon-card{padding:2.2rem 2rem;display:flex;flex-direction:column;align-items:center;gap:1.2rem;text-align:center;width:280px;border-radius:28px;}
+.anon-icon{width:80px;height:80px;border-radius:50%;background:rgba(160,210,163,0.2);border:1.5px solid rgba(210,248,212,0.45);display:flex;align-items:center;justify-content:center;font-size:2rem;animation:breathe 3s ease-in-out infinite;box-shadow:inset 0 1px 0 rgba(255,255,255,0.18);}
+.anon-desc{font-size:0.85rem;color:rgba(22,62,25,0.82);line-height:1.6;}
+.tab-row{display:flex;gap:0.3rem;background:rgba(120,165,123,0.16);border:1px solid rgba(200,235,202,0.25);border-radius:50px;padding:4px;box-shadow:inset 0 1px 3px rgba(0,0,0,0.1);}
+.tab-pill{flex:1;padding:0.5rem 1rem;border-radius:50px;font-size:0.8rem;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;color:var(--ts);background:transparent;transition:all 0.25s;text-align:center;}
+.tab-pill.active{background:rgba(190,235,193,0.3);color:#fff;font-weight:500;box-shadow:0 2px 8px rgba(40,90,45,0.2),inset 0 1px 0 rgba(255,255,255,0.18);}
+
+/* ═══════════════════════════════
+   HOME
+═══════════════════════════════ */
+.home-hero{padding:2rem 2rem 1rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
+.home-greeting{font-family:'Cormorant Garamond',serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:300;letter-spacing:0.04em;color:rgba(235,255,236,0.97);animation:fadeUp 0.7s ease both;text-shadow:0 2px 16px rgba(0,10,2,0.4);}
+.home-subtitle{font-size:0.92rem;color:rgba(30,72,33,0.82);margin-top:0.3rem;animation:fadeUp 0.7s 0.1s ease both;}
+.feature-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;padding:0 1.5rem 1.5rem;}
+.feature-card{
+  padding:1.9rem 1.7rem;cursor:pointer;
+  transition:transform 0.25s,box-shadow 0.25s;
+  animation:fadeUp 0.6s ease both;border-radius:22px;
+  background:rgba(215,235,217,0.42);
+  border:1px solid rgba(255,255,255,0.6);
+  backdrop-filter:blur(26px) saturate(150%);
+  -webkit-backdrop-filter:blur(26px) saturate(150%);
+  box-shadow:0 5px 22px rgba(80,120,85,0.14), 0 1px 0 rgba(255,255,255,0.65) inset;
+  position:relative;overflow:hidden;
+}
+.feature-card::before{content:'';position:absolute;top:0;left:0;right:0;height:38%;background:linear-gradient(180deg,rgba(255,255,255,0.3) 0%,transparent 100%);pointer-events:none;}
+.feature-card>*{position:relative;z-index:1;}
+.feature-card:hover{transform:translateY(-5px);box-shadow:0 18px 44px rgba(80,120,85,0.22), 0 1px 0 rgba(255,255,255,0.7) inset;background:rgba(225,242,227,0.55);}
+.feature-icon{font-size:2.3rem;margin-bottom:0.85rem;}
+.feature-title{font-family:'Cormorant Garamond',serif;font-size:1.35rem;font-weight:600;margin-bottom:0.45rem;color:rgba(18,50,21,0.97);letter-spacing:0.01em;}
+.feature-desc{font-size:0.82rem;color:rgba(30,72,33,0.78);line-height:1.65;font-weight:400;}
+
+/* ═══════════════════════════════
+   PROFILE
+═══════════════════════════════ */
+.profile-header{display:flex;flex-direction:column;align-items:center;padding:2.5rem 1.5rem 1.5rem;gap:1rem;animation:fadeUp 0.6s ease both;}
+.profile-avatar{width:90px;height:90px;border-radius:50%;background:linear-gradient(135deg,rgba(80,165,85,0.72),rgba(35,100,40,0.62));border:2px solid rgba(130,225,135,0.55);display:flex;align-items:center;justify-content:center;font-size:2.2rem;position:relative;box-shadow:0 4px 20px rgba(0,10,2,0.42),inset 0 1px 0 rgba(255,255,255,0.2);}
+.profile-avatar-edit{position:absolute;bottom:2px;right:2px;width:24px;height:24px;border-radius:50%;background:rgba(55,135,60,0.85);border:1px solid rgba(140,235,145,0.5);display:flex;align-items:center;justify-content:center;font-size:0.65rem;cursor:pointer;}
+.profile-name{font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;color:rgba(10,40,13,0.98);}
+.profile-handle{font-size:0.8rem;color:rgba(55,100,58,0.65);letter-spacing:0.08em;}
+.profile-stats{display:flex;gap:2rem;justify-content:center;}
+.stat-item{text-align:center;}
+.stat-num{font-size:1.4rem;font-weight:600;color:rgba(20,55,23,0.97);}
+.stat-label{font-size:0.7rem;color:rgba(60,100,63,0.6);letter-spacing:0.08em;margin-top:2px;}
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;padding:0 1.5rem 1.5rem;}
+.profile-section{padding:1.4rem 1.5rem;border-radius:20px;}
+.section-title{font-size:0.72rem;letter-spacing:0.12em;color:rgba(38,80,41,0.75);text-transform:uppercase;margin-bottom:1rem;font-weight:700;}
+.mood-row{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.mood-chip{background:rgba(185,218,188,0.42);border:1px solid rgba(255,255,255,0.5);border-radius:50px;padding:0.35rem 0.9rem;font-size:0.78rem;color:rgba(30,65,33,0.78);cursor:pointer;transition:all 0.2s;}
+.mood-chip.selected{background:rgba(100,155,103,0.65);border-color:rgba(255,255,255,0.65);color:#fff;box-shadow:0 2px 10px rgba(0,10,2,0.35);}
+.bio-display{font-size:0.85rem;color:rgba(40,80,43,0.72);line-height:1.7;cursor:pointer;}
+.bio-display:hover{color:rgba(20,55,23,0.96);}
+
+/* ═══════════════════════════════
+   ROUTINE
+═══════════════════════════════ */
+.routine-tabs{display:flex;gap:0.5rem;padding:1rem 1.5rem 0;flex-wrap:wrap;}
+.rtab{padding:0.5rem 1.2rem;border-radius:50px;font-size:0.8rem;font-family:'DM Sans',sans-serif;cursor:pointer;border:none;background:rgba(190,220,193,0.45);border:1px solid rgba(255,255,255,0.48);color:rgba(30,65,33,0.78);transition:all 0.2s;box-shadow:inset 0 1px 0 rgba(255,255,255,0.4);}
+.rtab.active{background:rgba(100,155,103,0.65);border-color:rgba(255,255,255,0.55);color:#fff;font-weight:500;box-shadow:0 2px 12px rgba(80,120,85,0.2),inset 0 1px 0 rgba(255,255,255,0.3);}
+.routine-section{display:none;animation:fadeIn 0.4s ease both;}
+.routine-section.active{display:block;}
+.routine-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1rem;padding:1rem 1.5rem;}
+.routine-card{padding:1.6rem;position:relative;overflow:hidden;border-radius:20px;}
+.routine-card::before{content:'';position:absolute;top:-30px;right:-30px;width:80px;height:80px;border-radius:50%;background:rgba(200,240,202,0.07);}
+.routine-num{font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:300;color:rgba(200,240,202,0.12);position:absolute;top:0.5rem;right:1rem;line-height:1;}
+.routine-step{font-size:0.7rem;letter-spacing:0.12em;color:rgba(70,115,73,0.58);text-transform:uppercase;margin-bottom:0.4rem;}
+.routine-title{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;color:rgba(12,42,15,0.97);}
+.routine-body{font-size:0.82rem;color:rgba(22,60,25,0.85);line-height:1.7;}
+.routine-tag{display:inline-block;background:rgba(150,195,153,0.22);border:1px solid rgba(210,240,212,0.3);border-radius:50px;padding:0.2rem 0.7rem;font-size:0.7rem;color:var(--ts);margin-top:0.7rem;letter-spacing:0.05em;}
+.breathe-widget{display:flex;flex-direction:column;align-items:center;padding:2rem 1.5rem;gap:1.5rem;}
+.breathe-circle{
+  width:150px;height:150px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%, rgba(200,240,203,0.28) 0%, rgba(130,185,133,0.18) 50%, rgba(70,120,73,0.25) 100%);
+  border:1.5px solid rgba(210,248,213,0.5);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all 0.5s ease;position:relative;
+  box-shadow:0 8px 32px rgba(40,90,45,0.25),inset 0 2px 0 rgba(255,255,255,0.22),inset 0 -2px 0 rgba(40,90,45,0.15);
+  backdrop-filter:blur(20px);
+}
+.breathe-circle::before{content:'';position:absolute;inset:-10px;border-radius:50%;border:1px solid rgba(200,240,202,0.18);animation:breathe 4s ease-in-out infinite;}
+.breathe-text{font-size:1.1rem;color:rgba(255,255,255,0.82);font-weight:500;margin-bottom:0.2rem;}
+.breathe-sub{font-size:0.72rem;color:var(--tm);}
+.check-list{padding:1rem 1.5rem;display:flex;flex-direction:column;gap:0.65rem;}
+.check-item{display:flex;align-items:flex-start;gap:0.9rem;padding:0.9rem 1.1rem;cursor:pointer;transition:background 0.2s;border-radius:14px;}
+.check-item:hover{background:rgba(150,195,153,0.1);}
+.check-box{width:22px;height:22px;border-radius:8px;flex-shrink:0;border:1.5px solid rgba(210,240,212,0.45);background:rgba(150,195,153,0.14);display:flex;align-items:center;justify-content:center;font-size:0.75rem;transition:all 0.2s;margin-top:1px;}
+.check-item.done .check-box{background:rgba(100,165,103,0.48);border-color:rgba(190,240,193,0.65);}
+.check-title{font-size:0.88rem;color:rgba(12,42,15,0.96);font-weight:500;}
+.check-desc{font-size:0.78rem;color:rgba(28,68,31,0.82);line-height:1.5;margin-top:0.15rem;}
+.check-item.done .check-title{text-decoration:line-through;color:var(--ts);}
+
+/* ═══════════════════════════════
+   STICKY WALL
+═══════════════════════════════ */
+.wall-toolbar{display:flex;align-items:center;gap:0.7rem;padding:0.9rem 1.5rem;flex-wrap:wrap;border-bottom:1px solid rgba(255,255,255,0.3);backdrop-filter:blur(16px);background:rgba(190,220,193,0.3);}
+.wall-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;letter-spacing:0.06em;flex:1;color:rgba(20,55,23,0.95);}
+.color-dot{width:20px;height:20px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s;}
+.color-dot.selected{border-color:rgba(255,255,255,0.75);transform:scale(1.22);}
+.wall-canvas{flex:1;position:relative;overflow:hidden;}
+.wall-bg{position:absolute;inset:0;background:radial-gradient(circle at 30% 40%,rgba(160,210,163,0.1) 0%,transparent 55%),radial-gradient(circle at 72% 68%,rgba(100,155,103,0.08) 0%,transparent 50%);}
+.sticky-note{position:absolute;width:180px;min-height:150px;border-radius:5px 18px 18px 18px;padding:1rem;cursor:grab;box-shadow:5px 8px 24px rgba(0,0,0,0.22),0 1px 0 rgba(255,255,255,0.18);font-size:0.82rem;line-height:1.6;color:rgba(30,50,32,0.88);transition:box-shadow 0.2s,transform 0.15s;user-select:none;animation:pop 0.3s ease both;word-break:break-word;}
+.sticky-note:active{cursor:grabbing;transform:scale(1.04) rotate(1.2deg);box-shadow:10px 14px 36px rgba(0,0,0,0.3);}
+.sticky-note:hover .sticky-delete{opacity:1;}
+.sticky-header{display:flex;justify-content:space-between;align-items:flex-start;gap:0.4rem;margin-bottom:0.4rem;}
+.sticky-ts{font-size:0.62rem;opacity:0.45;letter-spacing:0.04em;}
+.sticky-delete{opacity:0;background:rgba(0,0,0,0.16);border:none;border-radius:6px;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:0.6rem;cursor:pointer;color:rgba(30,50,32,0.7);transition:opacity 0.2s;flex-shrink:0;}
+.sticky-body{font-size:0.82rem;color:rgba(30,50,32,0.82);line-height:1.55;white-space:pre-wrap;}
+.sticky-pin{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:12px;height:12px;border-radius:50%;background:rgba(90,140,93,0.65);border:1px solid rgba(160,210,163,0.5);box-shadow:0 2px 5px rgba(0,0,0,0.22);}
+.add-note-modal{position:fixed;inset:0;background:rgba(25,55,28,0.55);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.add-note-modal.open{opacity:1;pointer-events:all;}
+.add-note-card{padding:2rem;width:360px;border-radius:28px;animation:pop 0.3s ease both;}
+.note-textarea{width:100%;background:rgba(150,195,153,0.16);border:1px solid rgba(210,240,212,0.38);border-radius:14px;padding:0.9rem 1rem;color:rgba(255,255,255,0.9);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;resize:none;height:120px;backdrop-filter:blur(12px);line-height:1.6;}
+.note-textarea::placeholder{color:rgba(255,255,255,0.28);}
+.note-textarea:focus{border-color:rgba(190,240,193,0.65);}
+
+/* ═══════════════════════════════
+   CHAT PAGE
+═══════════════════════════════ */
+.chat-wrap{display:flex;flex-direction:column;flex:1;min-height:0;gap:0.8rem;padding:0.8rem 1rem;}
+.video-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;flex:1;min-height:0;}
+.video-panel{
+  position:relative;border-radius:22px;overflow:hidden;
+  background:rgba(160,200,163,0.3);
+  border:1px solid rgba(210,240,212,0.38);
+  backdrop-filter:var(--lg-blur);
+  box-shadow:var(--lg-shadow);
+  min-height:160px;display:flex;align-items:center;justify-content:center;
+}
+.video-panel::before{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(255,255,255,0.1) 0%,transparent 100%);z-index:1;pointer-events:none;border-radius:22px 22px 0 0;}
+.video-panel video{width:100%;height:100%;object-fit:cover;border-radius:22px;position:absolute;inset:0;}
+.video-overlay{position:absolute;bottom:0;left:0;right:0;padding:0.8rem 1rem;background:linear-gradient(transparent,rgba(18,48,20,0.72));display:flex;align-items:flex-end;justify-content:space-between;z-index:3;}
+.v-label{font-size:0.75rem;letter-spacing:0.08em;color:rgba(255,255,255,0.72);}
+.anon-av{display:flex;flex-direction:column;align-items:center;gap:0.5rem;opacity:0.72;z-index:2;}
+.anon-ring{width:72px;height:72px;border-radius:50%;border:2px solid rgba(190,235,193,0.5);background:rgba(150,200,153,0.18);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;font-size:1.7rem;animation:breathe 3s ease-in-out infinite;box-shadow:inset 0 1px 0 rgba(255,255,255,0.2);}
+.stranger-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;width:100%;height:100%;z-index:2;background:linear-gradient(135deg,rgba(100,155,103,0.28),rgba(55,95,58,0.38));}
+.wave-row{display:flex;gap:4px;align-items:flex-end;}
+.wave-row span{width:4px;border-radius:3px;background:rgba(190,235,193,0.62);animation:wave 1.2s ease-in-out infinite;}
+.wave-row span:nth-child(1){height:12px;animation-delay:0s}.wave-row span:nth-child(2){height:20px;animation-delay:.1s}.wave-row span:nth-child(3){height:28px;animation-delay:.2s}.wave-row span:nth-child(4){height:20px;animation-delay:.3s}.wave-row span:nth-child(5){height:12px;animation-delay:.4s}
+.conn-overlay{position:absolute;inset:0;background:rgba(35,72,38,0.62);backdrop-filter:blur(12px);border-radius:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;z-index:5;transition:opacity 0.5s;}
+.conn-overlay.done{opacity:0;pointer-events:none;}
+.spin-ring{width:44px;height:44px;border-radius:50%;border:2px solid transparent;border-top-color:rgba(190,235,193,0.82);border-right-color:rgba(190,235,193,0.28);animation:spin 1s linear infinite;}
+.ctrl-btn{display:flex;flex-direction:column;align-items:center;gap:0.25rem;background:rgba(150,195,153,0.2);border:1px solid rgba(210,240,212,0.38);backdrop-filter:blur(18px);border-radius:16px;padding:0.6rem 1rem;cursor:pointer;transition:all 0.22s;color:rgba(255,255,255,0.78);font-size:0.68rem;letter-spacing:0.05em;min-width:58px;font-family:'DM Sans',sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,0.12);}
+.ctrl-btn:hover{background:rgba(190,235,193,0.28);transform:translateY(-2px);}
+.ctrl-btn.active{background:rgba(80,140,85,0.42);border-color:rgba(190,240,193,0.7);color:#fff;}
+.ctrl-btn.danger:hover{background:rgba(200,80,80,0.32);border-color:rgba(230,110,110,0.5);}
+.ctrl-icon{font-size:1.1rem;line-height:1;}
+.btn-next{background:linear-gradient(135deg,rgba(110,170,113,0.52),rgba(80,135,83,0.42));border:1px solid rgba(200,240,203,0.5);backdrop-filter:blur(18px);color:#fff;font-size:0.85rem;font-weight:500;letter-spacing:0.07em;padding:0.65rem 1.8rem;border-radius:50px;cursor:pointer;transition:all 0.28s;font-family:'DM Sans',sans-serif;box-shadow:0 4px 18px rgba(40,90,45,0.28),inset 0 1px 0 rgba(255,255,255,0.18);}
+.btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 26px rgba(40,90,45,0.42);}
+.inline-chat{background:rgba(150,195,153,0.13);border:1px solid rgba(210,240,212,0.25);border-radius:16px;backdrop-filter:blur(14px);display:flex;flex-direction:column;gap:0;overflow:hidden;max-height:200px;box-shadow:inset 0 1px 0 rgba(255,255,255,0.1);}
+.chat-msgs{flex:1;padding:0.7rem;display:flex;flex-direction:column;gap:0.4rem;overflow-y:auto;min-height:60px;}
+.chat-msgs::-webkit-scrollbar{width:3px;}.chat-msgs::-webkit-scrollbar-thumb{background:rgba(180,225,183,0.28);}
+.cmsg{font-size:0.78rem;line-height:1.5;}
+.cmsg.them{color:rgba(255,255,255,0.72);}
+.cmsg.me{color:rgba(190,240,193,0.9);text-align:right;}
+.cmsg-b{display:inline-block;background:rgba(150,195,153,0.18);border:1px solid rgba(210,240,212,0.22);border-radius:10px;padding:0.3rem 0.7rem;}
+.cmsg.me .cmsg-b{background:rgba(100,165,103,0.3);border-color:rgba(190,240,193,0.32);}
+.chat-row{display:flex;gap:0.4rem;padding:0.5rem;}
+.chat-in{flex:1;background:rgba(150,195,153,0.16);border:1px solid rgba(210,240,212,0.3);border-radius:10px;padding:0.45rem 0.8rem;color:rgba(255,255,255,0.88);font-family:'DM Sans',sans-serif;font-size:0.78rem;outline:none;}
+.chat-in::placeholder{color:rgba(255,255,255,0.26);}
+.chat-send{background:rgba(100,165,103,0.38);border:1px solid rgba(190,240,193,0.35);border-radius:8px;color:#fff;padding:0.4rem 0.8rem;cursor:pointer;font-size:0.78rem;transition:all 0.2s;}
+
+/* ═══════════════════════════════
+   FEED PAGE
+═══════════════════════════════ */
+.feed-wrap{display:flex;flex:1;min-height:0;overflow:hidden;}
+.feed-main{flex:1;overflow-y:auto;padding:1.2rem 1.2rem 1.5rem;display:flex;flex-direction:column;gap:1rem;scrollbar-width:thin;scrollbar-color:rgba(180,220,183,0.2) transparent;}
+.feed-main::-webkit-scrollbar{width:4px;}.feed-main::-webkit-scrollbar-thumb{background:rgba(180,220,183,0.22);border-radius:4px;}
+.feed-sidebar{width:270px;overflow-y:auto;padding:1.2rem 1rem 1.5rem;display:flex;flex-direction:column;gap:0.9rem;border-left:1px solid rgba(255,255,255,0.28);flex-shrink:0;background:rgba(180,210,183,0.2);}
+
+/* Feed glass — dark enough to contrast against light blobs */
+.feed-glass{
+  background:rgba(200,228,203,0.42);
+  border:1px solid rgba(255,255,255,0.55);
+  backdrop-filter:blur(30px) saturate(130%);
+  -webkit-backdrop-filter:blur(30px) saturate(130%);
+  box-shadow:0 6px 30px rgba(80,120,85,0.14), 0 1px 0 rgba(255,255,255,0.55) inset;
+  position:relative;overflow:hidden;
+}
+.feed-glass::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,0.22) 0%,transparent 100%);pointer-events:none;z-index:0;}
+.feed-glass>*{position:relative;z-index:1;}
+
+/* Composer */
+.composer{padding:1.3rem 1.4rem;border-radius:22px;display:flex;flex-direction:column;gap:0.85rem;}
+.composer-body{display:flex;gap:0.9rem;align-items:flex-start;}
+.composer-av{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.7),rgba(110,155,113,0.6));border:1.5px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;box-shadow:0 3px 12px rgba(0,10,2,0.4),inset 0 1px 0 rgba(255,255,255,0.22);margin-top:3px;}
+.composer-field{
+  flex:1;
+  background:rgba(225,242,226,0.72);
+  border:1.5px solid rgba(255,255,255,0.6);
+  border-radius:16px;padding:1rem 1.2rem;
+  color:rgba(20,50,23,0.92);
+  font-family:'DM Sans',sans-serif;font-size:0.92rem;
+  outline:none;resize:vertical;min-height:220px;max-height:480px;
+  line-height:1.7;
+  transition:border-color 0.2s,box-shadow 0.2s;
+  box-shadow:inset 0 3px 12px rgba(0,0,0,0.4);
+  box-sizing:border-box;
+}
+.composer-field::placeholder{color:rgba(80,120,85,0.42);}
+.composer-field:focus{border-color:rgba(100,155,103,0.75);box-shadow:0 0 0 3px rgba(138,171,142,0.2);}
+
+/* Media upload bar */
+.media-upload-bar{display:flex;align-items:center;gap:0.6rem;flex-wrap:wrap;padding-left:51px;}
+.media-upload-btn{
+  display:inline-flex;align-items:center;gap:0.38rem;
+  background:rgba(185,220,188,0.45);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;padding:0.38rem 1.05rem;
+  font-size:0.76rem;color:rgba(30,65,33,0.85);
+  cursor:pointer;transition:all 0.22s;
+  font-family:'DM Sans',sans-serif;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);
+  user-select:none;
+}
+.media-upload-btn:hover{background:rgba(140,185,143,0.6);color:rgba(20,50,23,0.95);border-color:rgba(255,255,255,0.65);transform:translateY(-1px);}
+
+/* Media preview strip */
+.media-preview-strip{display:flex;gap:0.6rem;flex-wrap:wrap;padding-left:51px;}
+.media-thumb{
+  position:relative;width:88px;height:70px;border-radius:12px;overflow:hidden;
+  border:1.5px solid rgba(100,195,105,0.48);
+  box-shadow:0 3px 14px rgba(0,10,2,0.45);flex-shrink:0;
+}
+.media-thumb img,.media-thumb video{width:100%;height:100%;object-fit:cover;display:block;}
+.media-thumb-remove{
+  position:absolute;top:3px;right:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:rgba(2,8,2,0.8);border:1px solid rgba(130,210,135,0.4);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.62rem;cursor:pointer;color:rgba(220,255,222,0.9);transition:all 0.2s;
+}
+.media-thumb-remove:hover{background:rgba(150,35,25,0.85);border-color:rgba(240,110,100,0.55);}
+.media-type-badge{position:absolute;bottom:3px;left:4px;background:rgba(2,10,2,0.78);border-radius:4px;padding:1px 5px;font-size:0.58rem;color:rgba(180,245,183,0.92);}
+
+.composer-actions{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;}
+.tag-pills{display:flex;gap:0.4rem;flex-wrap:wrap;}
+.tag-pill-sel{
+  background:rgba(180,215,183,0.45);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;padding:0.3rem 0.88rem;
+  font-size:0.73rem;color:rgba(30,65,33,0.82);
+  cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;
+}
+.tag-pill-sel:hover,.tag-pill-sel.active{background:rgba(110,160,113,0.6);border-color:rgba(255,255,255,0.65);color:#fff;box-shadow:0 2px 8px rgba(0,10,2,0.3);}
+.post-btn{
+  background:linear-gradient(135deg,rgba(90,140,93,0.78),rgba(65,110,68,0.7));
+  border:1px solid rgba(255,255,255,0.45);
+  color:#fff;font-family:'DM Sans',sans-serif;font-size:0.83rem;font-weight:700;
+  padding:0.58rem 1.55rem;border-radius:50px;cursor:pointer;transition:all 0.25s;
+  box-shadow:0 4px 18px rgba(70,110,75,0.25),inset 0 1px 0 rgba(255,255,255,0.3);
+  white-space:nowrap;letter-spacing:0.04em;
+}
+.post-btn:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,10,2,0.55);}
+.char-count{font-size:0.72rem;color:rgba(55,100,58,0.6);letter-spacing:0.03em;}
+.char-count.warn{color:rgba(180,100,40,0.9);}
+
+/* About page glass overrides — prevent ::before shimmer from hiding text */
+#aboutPage .glass::before{height:8%;opacity:0.3;}
+#aboutPage .glass p,#aboutPage .glass div{position:relative;z-index:2;}
+.write-btn{
+  display:inline-flex;align-items:center;gap:0.6rem;
+  background:rgba(185,220,188,0.45);
+  border:1px solid rgba(255,255,255,0.52);
+  border-radius:50px;padding:0.65rem 1.6rem;
+  color:rgba(25,60,28,0.85);
+  font-family:'DM Sans',sans-serif;font-size:0.88rem;font-weight:500;
+  cursor:pointer;transition:all 0.25s;letter-spacing:0.04em;
+  backdrop-filter:blur(16px);
+  box-shadow:0 3px 14px rgba(0,10,2,0.35),inset 0 1px 0 rgba(255,255,255,0.08);
+  align-self:flex-start;
+}
+.write-btn:hover{background:rgba(148,190,151,0.65);color:rgba(20,50,23,0.95);border-color:rgba(150,240,155,0.6);transform:translateY(-1px);box-shadow:0 6px 20px rgba(0,10,2,0.45);}
+.write-btn.open{background:rgba(120,170,123,0.6);border-color:rgba(255,255,255,0.65);color:#fff;}
+
+/* Feed filter bar */
+.feed-filter-bar{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;padding:0 0.2rem;}
+.post-card{
+  padding:1.35rem 1.45rem;border-radius:20px;
+  display:flex;flex-direction:column;gap:0.85rem;
+  animation:fadeUp 0.4s ease both;
+  transition:box-shadow 0.22s,transform 0.22s;
+  background:rgba(210,232,212,0.45);
+  border:1px solid rgba(255,255,255,0.52);
+  backdrop-filter:blur(22px) saturate(130%);
+  -webkit-backdrop-filter:blur(22px) saturate(130%);
+  box-shadow:0 5px 22px rgba(80,120,85,0.14), 0 1px 0 rgba(255,255,255,0.55) inset;
+  position:relative;overflow:hidden;
+}
+.post-card::before{content:'';position:absolute;top:0;left:0;right:0;height:30%;background:linear-gradient(180deg,rgba(255,255,255,0.045) 0%,transparent 100%);pointer-events:none;}
+.post-card>*{position:relative;z-index:1;}
+.post-card:hover{transform:translateY(-3px);box-shadow:0 14px 38px rgba(0,10,2,0.55),0 1px 0 rgba(255,255,255,0.09) inset;}
+.post-head{display:flex;align-items:center;gap:0.8rem;}
+.post-av{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,rgba(80,168,85,0.72),rgba(38,105,42,0.62));border:1.5px solid rgba(130,225,135,0.5);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;box-shadow:0 2px 10px rgba(0,10,2,0.38),inset 0 1px 0 rgba(255,255,255,0.18);}
+.post-meta{flex:1;}
+.post-author{font-size:0.88rem;font-weight:700;color:rgba(10,38,12,0.98);}
+.post-time{font-size:0.7rem;color:rgba(80,120,85,0.55);letter-spacing:0.04em;margin-top:2px;}
+.post-tag-badge{background:rgba(130,175,133,0.45);border:1px solid rgba(255,255,255,0.5);border-radius:50px;padding:0.26rem 0.88rem;font-size:0.71rem;color:rgba(12,42,15,0.96);font-weight:600;letter-spacing:0.06em;font-weight:600;box-shadow:0 1px 7px rgba(0,10,2,0.28);}
+.post-body{font-size:0.92rem;line-height:1.78;color:rgba(14,42,17,0.92);}
+.post-body.collapsed{display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;}
+.read-more{font-size:0.77rem;color:rgba(155,245,160,0.78);cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;letter-spacing:0.03em;}
+.read-more:hover{color:rgba(190,255,195,1);}
+.post-actions{display:flex;gap:0.5rem;align-items:center;padding-top:0.2rem;}
+.act-btn{display:flex;align-items:center;gap:0.4rem;background:rgba(180,215,183,0.38);border:1px solid rgba(255,255,255,0.5);border-radius:50px;padding:0.38rem 0.95rem;font-size:0.76rem;color:rgba(30,65,33,0.78);cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,0.07);}
+.act-btn:hover{background:rgba(140,185,143,0.55);color:rgba(20,50,23,0.95);border-color:rgba(255,255,255,0.65);}
+.act-btn.liked{background:rgba(230,150,150,0.35);border-color:rgba(255,200,200,0.5);color:rgba(140,40,40,0.95);}
+.act-btn.echoed{background:rgba(38,120,42,0.62);border-color:rgba(145,245,150,0.55);color:rgba(195,255,198,0.97);}
+.act-icon{font-size:0.97rem;}
+
+/* Post media grid */
+.post-media{display:flex;gap:0.5rem;flex-wrap:wrap;border-radius:12px;overflow:hidden;}
+.post-media-item{border-radius:12px;overflow:hidden;border:1px solid rgba(100,195,105,0.3);box-shadow:0 3px 12px rgba(0,10,2,0.35);cursor:pointer;transition:transform 0.2s,box-shadow 0.2s;flex:1;min-width:0;}
+.post-media-item:hover{transform:scale(1.012);box-shadow:0 6px 20px rgba(0,10,2,0.5);}
+.post-media-item img{display:block;width:100%;max-height:340px;object-fit:cover;}
+.post-media-item video{display:block;width:100%;max-height:340px;background:#000;}
+.post-media-item.solo{flex:0 0 100%;}
+.post-media-item.duo{flex:0 0 calc(50% - 0.25rem);}
+
+/* Lightbox */
+.lightbox{position:fixed;inset:0;background:rgba(1,6,1,0.93);backdrop-filter:blur(22px);z-index:500;display:none;align-items:center;justify-content:center;}
+.lightbox.open{display:flex;}
+.lightbox-inner{position:relative;max-width:90vw;max-height:90vh;}
+.lightbox-inner img,.lightbox-inner video{max-width:90vw;max-height:88vh;border-radius:16px;box-shadow:0 24px 70px rgba(0,0,0,0.7);display:block;}
+.lightbox-close{position:absolute;top:-14px;right:-14px;font-size:1rem;color:rgba(210,255,212,0.85);cursor:pointer;background:rgba(2,15,3,0.85);border:1px solid rgba(120,215,125,0.4);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;transition:all 0.2s;font-weight:700;}
+.lightbox-close:hover{background:rgba(140,35,28,0.88);border-color:rgba(240,110,100,0.5);color:#fff;}
+
+/* Comments */
+.comments-section{display:none;flex-direction:column;gap:0.6rem;border-top:1px solid rgba(100,195,105,0.2);padding-top:0.85rem;margin-top:0.1rem;}
+.comments-section.open{display:flex;}
+.comment-item{display:flex;gap:0.65rem;align-items:flex-start;}
+.cmt-av{width:28px;height:28px;border-radius:50%;background:rgba(30,90,33,0.72);border:1px solid rgba(110,205,115,0.38);display:flex;align-items:center;justify-content:center;font-size:0.75rem;flex-shrink:0;}
+.cmt-bubble{flex:1;background:rgba(210,232,212,0.5);border:1px solid rgba(255,255,255,0.5);border-radius:12px;padding:0.58rem 0.9rem;}
+.cmt-author{font-size:0.73rem;font-weight:700;color:rgba(40,80,43,0.9);margin-bottom:0.18rem;}
+.cmt-text{font-size:0.82rem;color:rgba(30,65,33,0.82);line-height:1.58;}
+.cmt-input-row{display:flex;gap:0.5rem;align-items:center;margin-top:0.3rem;}
+.cmt-in{flex:1;background:rgba(220,240,222,0.6);border:1px solid rgba(255,255,255,0.55);border-radius:50px;padding:0.48rem 1.05rem;color:rgba(20,50,23,0.9);font-family:'DM Sans',sans-serif;font-size:0.81rem;outline:none;}
+.cmt-in::placeholder{color:rgba(80,120,85,0.42);}
+.cmt-in:focus{border-color:rgba(140,240,145,0.72);}
+.cmt-send{background:rgba(110,160,113,0.6);border:1px solid rgba(255,255,255,0.5);border-radius:50px;color:#fff;padding:0.45rem 1.05rem;cursor:pointer;font-size:0.78rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;font-weight:600;}
+.cmt-send:hover{background:rgba(65,160,70,0.82);}
+
+/* Sidebar widgets */
+.sidebar-widget{padding:1.2rem 1.3rem;border-radius:18px;background:rgba(210,232,212,0.42);border:1px solid rgba(255,255,255,0.52);backdrop-filter:blur(20px);box-shadow:0 4px 18px rgba(80,120,85,0.12),inset 0 1px 0 rgba(255,255,255,0.45);}
+.widget-title{font-size:0.7rem;letter-spacing:0.14em;color:rgba(35,78,38,0.82);text-transform:uppercase;margin-bottom:0.9rem;font-weight:700;}
+.guideline-item{display:flex;align-items:flex-start;gap:0.6rem;font-size:0.8rem;color:rgba(18,52,21,0.88);line-height:1.6;margin-bottom:0.62rem;}
+.gl-dot{width:7px;height:7px;border-radius:50%;background:rgba(140,240,145,0.75);flex-shrink:0;margin-top:0.4rem;box-shadow:0 0 7px rgba(140,240,145,0.45);}
+.trending-item{display:flex;align-items:center;gap:0.6rem;padding:0.5rem 0.3rem;border-bottom:1px solid rgba(100,195,105,0.14);cursor:pointer;transition:all 0.2s;border-radius:8px;}
+.trending-item:last-child{border-bottom:none;}
+.trending-item:hover{background:rgba(30,90,33,0.45);padding-left:0.6rem;}
+.tr-rank{font-size:0.69rem;color:rgba(155,225,158,0.52);width:16px;flex-shrink:0;font-weight:700;}
+.tr-tag{font-size:0.84rem;color:rgba(14,50,17,0.95);font-weight:600;flex:1;}
+.tr-count{font-size:0.7rem;color:rgba(70,110,73,0.55);}
+
+/* Rejected post notice */
+.reject-notice{background:rgba(130,30,20,0.55);border:1px solid rgba(240,130,115,0.48);border-radius:14px;padding:0.85rem 1.1rem;font-size:0.83rem;color:rgba(255,210,200,0.96);display:flex;align-items:flex-start;gap:0.7rem;animation:fadeUp 0.3s ease both;box-shadow:0 2px 14px rgba(100,20,12,0.35);}
+ 
+.feed-glass::before{content:'';position:absolute;top:0;left:0;right:0;height:40%;background:linear-gradient(180deg,rgba(255,255,255,0.07) 0%,transparent 100%);pointer-events:none;}
+.feed-glass>*{position:relative;z-index:1;}
+
+/* Feed filter bar */
+.feed-filter-bar{display:flex;gap:0.4rem;align-items:center;flex-wrap:wrap;padding:0 0.2rem;}
+.ffilter{
+  background:rgba(185,218,188,0.42);
+  border:1px solid rgba(255,255,255,0.48);
+  border-radius:50px;padding:0.4rem 1.05rem;
+  font-size:0.76rem;font-family:'DM Sans',sans-serif;
+  color:rgba(30,65,33,0.78);cursor:pointer;transition:all 0.2s;
+}
+.ffilter:hover{background:rgba(155,195,158,0.6);color:rgba(20,50,23,0.95);}
+.ffilter.active{background:rgba(110,158,113,0.65);border-color:rgba(255,255,255,0.65);color:#fff;font-weight:700;box-shadow:0 2px 14px rgba(80,120,85,0.18);}
+
+
+/* ═══════════════════════════════
+   ABOUT US PAGE
+═══════════════════════════════ */
+.creators-row{
+  display:flex;gap:1.8rem;justify-content:center;align-items:stretch;
+  flex-wrap:wrap;width:100%;max-width:880px;
+}
+.creator-card{
+  display:flex;flex-direction:column;align-items:center;gap:1rem;
+  padding:2.2rem 1.8rem 2rem;border-radius:28px;
+  width:250px;flex:0 0 250px;text-align:center;
+  background:rgba(210,232,212,0.42);
+  border:1px solid rgba(255,255,255,0.55);
+  backdrop-filter:blur(26px) saturate(130%);
+  box-shadow:0 6px 28px rgba(0,10,2,0.45),0 1px 0 rgba(255,255,255,0.07) inset;
+  position:relative;overflow:visible;
+  animation:fadeUp 0.6s ease both;
+  transition:transform 0.28s,box-shadow 0.28s;
+}
+.creator-card::before{content:'';position:absolute;top:0;left:0;right:0;height:35%;background:linear-gradient(180deg,rgba(255,255,255,0.05) 0%,transparent 100%);border-radius:28px;pointer-events:none;}
+.creator-card>*{position:relative;z-index:1;}
+.creator-card:hover{transform:translateY(-6px);box-shadow:0 18px 44px rgba(0,10,2,0.6),0 1px 0 rgba(255,255,255,0.1) inset;}
+.creator-center{
+  padding:2.6rem 1.8rem 2.2rem;
+  border-color:rgba(255,255,255,0.7);
+  background:rgba(220,242,222,0.55);
+  box-shadow:0 10px 40px rgba(0,10,2,0.6),0 0 0 1px rgba(130,240,135,0.18),0 1px 0 rgba(255,255,255,0.1) inset;
+  transform:scale(1.04);
+}
+.creator-center:hover{transform:scale(1.04) translateY(-6px);}
+.creator-ring{
+  width:108px;height:108px;border-radius:50%;
+  background:linear-gradient(145deg,rgba(55,140,60,0.65),rgba(18,70,22,0.75));
+  border:2px solid rgba(120,220,125,0.5);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;flex-shrink:0;overflow:hidden;
+  box-shadow:0 4px 20px rgba(0,10,2,0.5),inset 0 2px 0 rgba(255,255,255,0.18);
+  animation:breathe 4s ease-in-out infinite;
+}
+.creator-ring-main{
+  width:128px;height:128px;
+  border-color:rgba(160,248,163,0.7);
+  background:linear-gradient(145deg,rgba(65,160,70,0.7),rgba(25,90,28,0.78));
+  box-shadow:0 6px 30px rgba(0,10,2,0.55),0 0 35px rgba(120,240,125,0.18),inset 0 2px 0 rgba(255,255,255,0.22);
+  animation:breathe 3.5s ease-in-out infinite;overflow:hidden;
+}
+.creator-ring-glow{
+  position:absolute;inset:-10px;border-radius:50%;
+  border:1.5px solid rgba(140,240,145,0.22);
+  animation:breathe 4s ease-in-out infinite;
+  pointer-events:none;
+}
+.creator-avatar{font-size:2.6rem;line-height:1;}
+.creator-ring-main .creator-avatar{font-size:3rem;}
+.creator-name{
+  font-family:'Cormorant Garamond',serif;
+  font-size:1.4rem;font-weight:300;
+  color:rgba(20,55,23,0.97);
+  letter-spacing:0.03em;line-height:1;
+}
+.creator-role{
+  font-size:0.7rem;color:rgba(35,80,38,0.82);
+  letter-spacing:0.07em;font-weight:700;
+  text-transform:uppercase;
+}
+.creator-bio{
+  font-size:0.83rem;color:rgba(20,58,23,0.86);
+  line-height:1.68;
+}
+.creator-tags{display:flex;gap:0.45rem;flex-wrap:wrap;justify-content:center;margin-top:0.2rem;}
+.creator-tag{
+  background:rgba(170,210,173,0.45);
+  border:1px solid rgba(255,255,255,0.5);
+  border-radius:50px;padding:0.28rem 0.82rem;
+  font-size:0.7rem;color:rgba(15,48,18,0.92);font-weight:500;
+  white-space:nowrap;
+}
+
+@media(max-width:820px){
+  .creators-row{flex-direction:column;align-items:center;}
+  .creator-center{transform:scale(1);}
+  .creator-center:hover{transform:translateY(-6px);}
+}
+@media(max-width:900px){.feed-sidebar{display:none;}}
+@media(max-width:640px){
+  :root{--nav-w:62px;}
+  .video-grid{grid-template-columns:1fr;}
+  .profile-grid{grid-template-columns:1fr;}
+  .feature-grid{grid-template-columns:1fr 1fr;}
+  .routine-grid{grid-template-columns:1fr;}
+  .login-cards{flex-direction:column;align-items:center;}
+  .anon-card{width:340px;}
+}
+
+/* ═══════════════════════════════
+   FRIENDS PAGE
+═══════════════════════════════ */
+.friends-wrap{display:flex;flex:1;min-height:0;overflow:hidden;gap:0;}
+.friends-main{flex:1;overflow-y:auto;padding:1.4rem 1.4rem 2rem;display:flex;flex-direction:column;gap:1.2rem;scrollbar-width:thin;scrollbar-color:rgba(180,220,183,0.2) transparent;}
+.friends-main::-webkit-scrollbar{width:4px;}.friends-main::-webkit-scrollbar-thumb{background:rgba(180,220,183,0.22);border-radius:4px;}
+.friends-sidebar{width:280px;overflow-y:auto;padding:1.2rem 1rem 1.5rem;display:flex;flex-direction:column;gap:1rem;border-left:1px solid rgba(255,255,255,0.28);flex-shrink:0;background:rgba(180,210,183,0.2);}
+@media(max-width:860px){.friends-sidebar{display:none;}}
+.friends-search-bar{display:flex;gap:0.6rem;align-items:center;}
+.friends-search-bar input{flex:1;background:rgba(220,238,222,0.55);border:1px solid rgba(255,255,255,0.55);border-radius:50px;padding:0.7rem 1.1rem;color:rgba(25,55,28,0.9);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;}
+.friends-search-bar input::placeholder{color:rgba(80,120,85,0.45);}
+.friends-search-bar input:focus{border-color:rgba(100,155,103,0.7);box-shadow:0 0 0 3px rgba(138,171,142,0.18);}
+.friends-tabs{display:flex;gap:0.4rem;}
+.ftab{padding:0.45rem 1.1rem;border-radius:50px;font-size:0.78rem;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,0.48);background:rgba(190,220,193,0.45);color:rgba(30,65,33,0.78);transition:all 0.2s;position:relative;}
+.ftab.active{background:rgba(100,155,103,0.65);border-color:rgba(255,255,255,0.55);color:#fff;font-weight:500;}
+.ftab .badge{position:absolute;top:-4px;right:-4px;background:#e05555;color:#fff;font-size:0.6rem;font-weight:700;border-radius:50px;padding:1px 5px;min-width:16px;text-align:center;}
+.friend-card{display:flex;align-items:center;gap:1rem;padding:1rem 1.2rem;border-radius:18px;background:rgba(215,235,217,0.42);border:1px solid rgba(255,255,255,0.58);backdrop-filter:blur(22px);box-shadow:0 4px 18px rgba(80,120,85,0.12),inset 0 1px 0 rgba(255,255,255,0.5);transition:transform 0.2s,box-shadow 0.2s;}
+.friend-card:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(80,120,85,0.18),inset 0 1px 0 rgba(255,255,255,0.55);}
+.friend-av{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.7),rgba(110,155,113,0.6));border:2px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;box-shadow:0 2px 10px rgba(80,120,85,0.18);}
+.friend-info{flex:1;min-width:0;}
+.friend-name{font-size:0.92rem;font-weight:600;color:rgba(14,44,17,0.96);}
+.friend-handle{font-size:0.72rem;color:rgba(55,100,58,0.65);letter-spacing:0.04em;margin-top:1px;}
+.friend-status{font-size:0.74rem;color:rgba(35,80,38,0.72);margin-top:3px;font-style:italic;}
+.friend-actions{display:flex;gap:0.5rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
+.f-btn{padding:0.38rem 0.95rem;border-radius:50px;font-size:0.74rem;font-family:'DM Sans',sans-serif;cursor:pointer;border:1px solid rgba(255,255,255,0.5);transition:all 0.2s;font-weight:500;}
+.f-btn-primary{background:rgba(100,155,103,0.65);color:#fff;}
+.f-btn-primary:hover{background:rgba(80,140,83,0.8);}
+.f-btn-secondary{background:rgba(185,218,188,0.45);color:rgba(25,60,28,0.85);}
+.f-btn-secondary:hover{background:rgba(155,195,158,0.6);}
+.f-btn-danger{background:rgba(220,130,130,0.38);border-color:rgba(255,200,200,0.45);color:rgba(140,30,30,0.9);}
+.f-btn-danger:hover{background:rgba(220,100,100,0.5);}
+.f-btn-accept{background:rgba(80,155,83,0.7);color:#fff;}
+.f-btn-accept:hover{background:rgba(60,135,63,0.85);}
+.friends-empty{text-align:center;padding:3rem 1rem;opacity:0.45;}
+.friends-empty .fe-icon{font-size:2.8rem;margin-bottom:0.7rem;}
+.friends-empty .fe-title{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:rgba(18,52,21,0.8);}
+.friends-empty .fe-sub{font-size:0.8rem;color:rgba(40,80,43,0.6);margin-top:0.3rem;}
+.friend-dm-modal{position:fixed;inset:0;background:rgba(25,55,28,0.5);backdrop-filter:blur(14px);display:flex;align-items:center;justify-content:center;z-index:300;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.friend-dm-modal.open{opacity:1;pointer-events:all;}
+.dm-card{width:380px;max-width:95vw;border-radius:26px;padding:1.8rem;display:flex;flex-direction:column;gap:1rem;}
+.dm-header{display:flex;align-items:center;gap:0.8rem;}
+.dm-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.7),rgba(110,155,113,0.6));border:1.5px solid rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;font-size:1.3rem;}
+.dm-name{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:rgba(14,44,17,0.96);}
+.dm-msgs{flex:1;min-height:180px;max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:0.5rem;padding:0.5rem 0;scrollbar-width:thin;}
+.dm-msg{font-size:0.82rem;line-height:1.5;}
+.dm-msg.me{text-align:right;}.dm-msg.them{text-align:left;}
+.dm-bubble{display:inline-block;padding:0.4rem 0.85rem;border-radius:14px;max-width:85%;}
+.dm-msg.me .dm-bubble{background:rgba(100,155,103,0.55);color:rgba(12,40,15,0.95);}
+.dm-msg.them .dm-bubble{background:rgba(215,235,217,0.55);color:rgba(12,40,15,0.95);}
+.dm-input-row{display:flex;gap:0.5rem;align-items:center;}
+.dm-in{flex:1;background:rgba(220,240,222,0.6);border:1px solid rgba(255,255,255,0.55);border-radius:50px;padding:0.5rem 1rem;color:rgba(20,50,23,0.9);font-family:'DM Sans',sans-serif;font-size:0.83rem;outline:none;}
+.dm-in::placeholder{color:rgba(80,120,85,0.42);}
+.dm-send{background:rgba(100,155,103,0.65);border:1px solid rgba(255,255,255,0.5);border-radius:50px;color:#fff;padding:0.45rem 1.1rem;cursor:pointer;font-size:0.8rem;font-family:'DM Sans',sans-serif;transition:all 0.2s;font-weight:600;}
+.dm-send:hover{background:rgba(80,140,83,0.8);}
+.dm-close{background:rgba(185,218,188,0.45);border:1px solid rgba(255,255,255,0.5);border-radius:50px;color:rgba(25,60,28,0.85);padding:0.45rem 1.1rem;cursor:pointer;font-size:0.8rem;font-family:'DM Sans',sans-serif;}
+.suggest-card{padding:1.1rem 1.2rem;border-radius:16px;background:rgba(210,232,212,0.42);border:1px solid rgba(255,255,255,0.52);backdrop-filter:blur(18px);display:flex;align-items:center;gap:0.85rem;}
+.suggest-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.6),rgba(110,155,113,0.5));border:1.5px solid rgba(255,255,255,0.55);display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
+.suggest-info{flex:1;min-width:0;}
+.suggest-name{font-size:0.84rem;font-weight:600;color:rgba(14,44,17,0.95);}
+.suggest-why{font-size:0.7rem;color:rgba(50,90,53,0.65);margin-top:1px;}
+
+
+/* ═══════════════════════════════
+   MESSAGING SYSTEM
+═══════════════════════════════ */
+.msg-bubble-wrap{display:flex;align-items:flex-end;gap:0.6rem;max-width:72%;}
+.msg-bubble-wrap.me{align-self:flex-end;flex-direction:row-reverse;}
+.msg-bubble-wrap.them{align-self:flex-start;}
+.msg-av-sm{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.6),rgba(110,155,113,0.5));border:1.5px solid rgba(255,255,255,0.55);display:flex;align-items:center;justify-content:center;font-size:0.9rem;flex-shrink:0;}
+.msg-bubble{padding:0.62rem 1rem;border-radius:18px;font-size:0.88rem;line-height:1.6;max-width:100%;word-break:break-word;position:relative;}
+.msg-bubble-wrap.me .msg-bubble{background:linear-gradient(135deg,rgba(90,148,93,0.72),rgba(65,115,68,0.65));color:#fff;border-bottom-right-radius:5px;box-shadow:0 2px 10px rgba(70,110,75,0.22);}
+.msg-bubble-wrap.them .msg-bubble{background:rgba(220,240,222,0.65);color:rgba(10,42,13,0.92);border-bottom-left-radius:5px;border:1px solid rgba(255,255,255,0.52);box-shadow:0 2px 8px rgba(80,120,85,0.1);}
+.msg-time{font-size:0.62rem;color:rgba(50,90,53,0.45);margin-top:3px;text-align:right;padding:0 0.3rem;}
+.msg-bubble-wrap.them .msg-time{text-align:left;}
+.msg-img{max-width:220px;max-height:200px;border-radius:14px;object-fit:cover;cursor:pointer;display:block;border:1px solid rgba(255,255,255,0.4);}
+.conv-item{display:flex;align-items:center;gap:0.8rem;padding:0.85rem 1.1rem;cursor:pointer;transition:background 0.18s;border-radius:0;border-bottom:1px solid rgba(255,255,255,0.15);}
+.conv-item:hover{background:rgba(200,228,203,0.38);}
+.conv-item.active{background:rgba(200,228,203,0.52);border-left:3px solid rgba(100,155,103,0.7);}
+.conv-av{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.6),rgba(110,155,113,0.5));border:2px solid rgba(255,255,255,0.58);display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0;position:relative;}
+.conv-unread-dot{position:absolute;top:1px;right:1px;width:10px;height:10px;border-radius:50%;background:#4caf60;border:2px solid rgba(168,200,171,0.8);}
+.conv-info{flex:1;min-width:0;}
+.conv-name{font-size:0.88rem;font-weight:600;color:rgba(10,42,13,0.96);}
+.conv-preview{font-size:0.75rem;color:rgba(45,85,48,0.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;}
+.conv-time{font-size:0.65rem;color:rgba(55,95,58,0.5);}
+.conv-unread-count{background:#4caf60;color:#fff;font-size:0.6rem;font-weight:700;border-radius:50px;padding:1px 5px;min-width:16px;text-align:center;}
+.date-divider{text-align:center;font-size:0.7rem;color:rgba(50,90,53,0.45);letter-spacing:0.08em;padding:0.5rem 0;position:relative;}
+.date-divider::before,.date-divider::after{content:'';position:absolute;top:50%;width:35%;height:1px;background:rgba(180,220,183,0.3);}
+.date-divider::before{left:5%}.date-divider::after{right:5%;}
+
+</style>
+</head>
+<body>
+
+<!-- AMBIENT BLOBS -->
+<div class="blob-layer">
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+</div>
+
+<div class="app" id="app">
+
+<!-- ═══════════════════════
+     VERTICAL SIDE NAV
+═══════════════════════ -->
+<nav class="sidenav hidden" id="sideNav">
+  <div class="sidenav-logo">
+    <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+      <!-- Outer ring -->
+      <circle cx="22" cy="22" r="20" fill="none" stroke="#8aab8e" stroke-width="0.8" opacity="0.35"/>
+      <!-- Main circle -->
+      <circle cx="22" cy="22" r="17" fill="#c8deca" stroke="#8aab8e" stroke-width="1"/>
+      <!-- Top sheen -->
+      <ellipse cx="22" cy="14" rx="10" ry="5" fill="white" opacity="0.28"/>
+      <!-- Leaf body -->
+      <ellipse cx="22" cy="21.5" rx="10" ry="13.5" fill="#6b9870" opacity="0.92"/>
+      <!-- Center vein -->
+      <line x1="22" y1="9" x2="22" y2="34" stroke="#3d6644" stroke-width="0.9" stroke-linecap="round" opacity="0.65"/>
+      <!-- Left veins -->
+      <path d="M22 15 Q16 17 13 20" fill="none" stroke="#3d6644" stroke-width="0.55" stroke-linecap="round" opacity="0.5"/>
+      <path d="M22 20 Q15 23 12 27" fill="none" stroke="#3d6644" stroke-width="0.55" stroke-linecap="round" opacity="0.5"/>
+      <!-- Right veins -->
+      <path d="M22 15 Q28 17 31 20" fill="none" stroke="#3d6644" stroke-width="0.55" stroke-linecap="round" opacity="0.5"/>
+      <path d="M22 20 Q29 23 32 27" fill="none" stroke="#3d6644" stroke-width="0.55" stroke-linecap="round" opacity="0.5"/>
+      <!-- Stem -->
+      <path d="M22 34 Q22 38 23 40" fill="none" stroke="#3d6644" stroke-width="1.2" stroke-linecap="round" opacity="0.45"/>
+      <!-- Shimmer dot -->
+      <circle cx="26" cy="17" r="1.8" fill="white" opacity="0.32"/>
+    </svg>
+  </div>
+  <div class="sidenav-divider"></div>
+
+  <button class="snav-btn active" id="navHome" onclick="navigate('home')">
+    <span class="sn-icon">🏡</span>Home
+  </button>
+  <button class="snav-btn" id="navFeed" onclick="navigate('feed')">
+    <span class="sn-icon">🕊️</span>Feed
+  </button>
+  <button class="snav-btn" id="navChat" onclick="navigate('chat')">
+    <span class="sn-icon">🌿</span>Connect
+  </button>
+  <button class="snav-btn" id="navRoutine" onclick="navigate('routine')">
+    <span class="sn-icon">🧘</span>Routine
+  </button>
+  <button class="snav-btn" id="navWall" onclick="navigate('wall')">
+    <span class="sn-icon">📌</span>Wall
+  </button>
+
+  <button class="snav-btn" id="navFriends" onclick="navigate('friends')" style="position:relative;">
+    <span class="sn-icon">🫂</span>Friends
+    <span id="friendReqBadge" style="display:none;position:absolute;top:6px;right:8px;width:8px;height:8px;border-radius:50%;background:#e05555;box-shadow:0 0 6px #e05555;"></span>
+  </button>
+
+  <div class="snav-bottom">
+    <div class="sidenav-divider"></div>
+    <button class="snav-btn" id="navAbout" onclick="navigate('about')">
+      <span class="sn-icon">✦</span>About
+    </button>
+    <button class="snav-btn" id="navProfile" onclick="navigate('profile')">
+      <span class="sn-icon">🌙</span>Profile
+    </button>
+    <div class="snav-avatar" id="navAvatar" onclick="navigate('profile')">🌙</div>
+  </div>
+</nav>
+
+<!-- ═══════════════════════
+     PAGE: LOGIN
+═══════════════════════ -->
+<div class="page" id="loginPage">
+  <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;align-items:center;">
+    <div class="login-hero">
+      <div class="login-logo">sage</div>
+      <div class="login-tagline">a space to say the unsaid</div>
+    </div>
+    <div class="login-cards">
+      <div class="glass login-card">
+        <div class="login-card-title" id="authTitle">Welcome back</div>
+        <div class="tab-row">
+          <button class="tab-pill active" id="tabLogin" onclick="switchTab('login')">Sign in</button>
+          <button class="tab-pill" id="tabSignup" onclick="switchTab('signup')">Create account</button>
+        </div>
+        <div id="loginForm" style="display:flex;flex-direction:column;gap:0.9rem;">
+          <div><label class="input-label">Email</label><input class="input-field" type="email" placeholder="you@example.com" id="loginEmail"></div>
+          <div><label class="input-label">Password</label><input class="input-field" type="password" placeholder="••••••••" id="loginPass"></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:0.3rem;" onclick="doLogin()">Enter Sage</button>
+          <p style="font-size:0.72rem;color:var(--tm);text-align:center;cursor:pointer;">Forgot password?</p>
+        </div>
+        <div id="signupForm" style="display:none;flex-direction:column;gap:0.9rem;">
+          <div><label class="input-label">Display name</label><input class="input-field" type="text" placeholder="How should we call you?" id="signupName"></div>
+          <div><label class="input-label">Email</label><input class="input-field" type="email" placeholder="you@example.com" id="signupEmail"></div>
+          <div><label class="input-label">Password</label><input class="input-field" type="password" placeholder="Create a password" id="signupPass"></div>
+          <button class="btn btn-primary" style="width:100%;margin-top:0.3rem;" onclick="doSignup()">Create Account</button>
+        </div>
+      </div>
+      <div class="glass anon-card">
+        <div class="anon-icon">🌫️</div>
+        <div class="login-card-title">Stay Anonymous</div>
+        <p class="anon-desc">No account needed. Enter as a shadow — no name, no history, just presence and honesty.</p>
+        <button class="btn btn-secondary" style="width:100%;" onclick="continueAnon()">Continue as Anonymous</button>
+        <p style="font-size:0.68rem;color:var(--tm);line-height:1.6;text-align:center;">Your session won't be saved.<br>Sticky wall resets on exit.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: HOME
+═══════════════════════ -->
+<div class="page hidden" id="homePage">
+  <div class="scroll-content">
+    <div class="home-hero">
+      <div>
+        <div class="home-greeting" id="homeGreeting">Good evening, friend.</div>
+        <div class="home-subtitle">How are you holding up today?</div>
+      </div>
+      <div class="glass-sm" style="padding:0.8rem 1.2rem;display:flex;align-items:center;gap:0.5rem;border-radius:14px;">
+        <span style="font-size:0.72rem;color:rgba(38,78,41,0.78);letter-spacing:0.08em;font-weight:700;">MOOD</span>
+        <select id="moodSelect" onchange="updateMood()" style="background:transparent;border:none;color:rgba(18,52,21,0.9);font-family:'DM Sans',sans-serif;font-size:0.84rem;outline:none;cursor:pointer;font-weight:500;">
+          <option>🌿 Okay</option><option>🌧️ Heavy</option><option>☀️ Light</option>
+          <option>🌫️ Numb</option><option>🌊 Overwhelmed</option><option>🍃 Peaceful</option>
+        </select>
+      </div>
+    </div>
+    <div class="feature-grid">
+      <div class="glass feature-card" onclick="navigate('chat')" style="animation-delay:0.05s"><div class="feature-icon">🌿</div><div class="feature-title">Talk to a Stranger</div><div class="feature-desc">Connect anonymously with someone who just wants to listen. No judgment, no history.</div></div>
+      <div class="glass feature-card" onclick="navigate('feed')" style="animation-delay:0.08s"><div class="feature-icon">🕊️</div><div class="feature-title">The Clearing</div><div class="feature-desc">A gentle social feed — share feelings, read others' truths, and offer support.</div></div>
+      <div class="glass feature-card" onclick="navigate('routine')" style="animation-delay:0.1s"><div class="feature-icon">🧘</div><div class="feature-title">Anxiety Routine</div><div class="feature-desc">Guided steps and breathing exercises for when things feel too heavy.</div></div>
+      <div class="glass feature-card" onclick="navigate('wall')" style="animation-delay:0.15s"><div class="feature-icon">📌</div><div class="feature-title">My Sticky Wall</div><div class="feature-desc">A private space to pin your thoughts, takeaways, and little reminders to yourself.</div></div>
+      <div class="glass feature-card" onclick="navigate('profile')" style="animation-delay:0.2s"><div class="feature-icon">🌙</div><div class="feature-title">My Profile</div><div class="feature-desc">Your safe space stats, mood history, and personal settings.</div></div>
+    </div>
+    <div class="glass" style="margin:0 1.5rem 1.5rem;padding:1.5rem 1.8rem;border-radius:22px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <span style="font-size:0.72rem;letter-spacing:0.12em;color:rgba(40,90,43,0.65);text-transform:uppercase;font-weight:700;">Daily check-in</span>
+        <span style="font-size:0.72rem;color:rgba(140,220,143,0.5);" id="checkDate"></span>
+      </div>
+      <p style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-style:italic;color:rgba(22,60,25,0.88);line-height:1.7;margin-bottom:1rem;">"You don't have to have it all figured out to move forward. Just breathe. Just be here."</p>
+      <button class="btn btn-secondary btn-sm" onclick="navigate('routine')">Begin today's routine →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: PROFILE
+═══════════════════════ -->
+<div class="page hidden" id="profilePage">
+  <div class="scroll-content">
+    <div class="profile-header">
+      <div class="profile-avatar" id="profileAvatarEl">
+        <span id="profileEmoji">🌙</span>
+        <div class="profile-avatar-edit" onclick="changeAvatar()">✏️</div>
+      </div>
+      <div style="text-align:center;">
+        <div class="profile-name" id="profileNameEl">Anonymous</div>
+        <div class="profile-handle" id="profileHandleEl">@anonymous · sage</div>
+      </div>
+      <div class="profile-stats">
+        <div class="stat-item"><div class="stat-num" id="statSessions">0</div><div class="stat-label">Sessions</div></div>
+        <div class="stat-item"><div class="stat-num" id="statNotes">0</div><div class="stat-label">Notes</div></div>
+        <div class="stat-item"><div class="stat-num" id="statDays">1</div><div class="stat-label">Days</div></div>
+      </div>
+    </div>
+    <div class="profile-grid">
+      <div class="glass profile-section">
+        <div class="section-title">About me</div>
+        <div class="bio-display" id="bioDisplay" onclick="editBio()">Click to add a little something about yourself…</div>
+        <textarea class="input-field" id="bioEdit" style="display:none;resize:none;height:90px;margin-top:0.5rem;" placeholder="A little about you…" onblur="saveBio()"></textarea>
+      </div>
+      <div class="glass profile-section">
+        <div class="section-title">Today's mood</div>
+        <div class="mood-row" id="moodRow">
+          <span class="mood-chip" onclick="selectMoodChip(this)">🌿 okay</span>
+          <span class="mood-chip" onclick="selectMoodChip(this)">🌧️ heavy</span>
+          <span class="mood-chip" onclick="selectMoodChip(this)">☀️ light</span>
+          <span class="mood-chip" onclick="selectMoodChip(this)">🌫️ numb</span>
+          <span class="mood-chip" onclick="selectMoodChip(this)">🌊 overwhelmed</span>
+          <span class="mood-chip" onclick="selectMoodChip(this)">🍃 peaceful</span>
+        </div>
+      </div>
+      <div class="glass profile-section">
+        <div class="section-title">My affirmations</div>
+        <div style="display:flex;flex-direction:column;gap:0.5rem;" id="affirmList"></div>
+        <div style="display:flex;gap:0.5rem;margin-top:0.8rem;">
+          <input class="input-field" id="affirmInput" placeholder="Add an affirmation…" style="font-size:0.8rem;" onkeydown="if(event.key==='Enter')addAffirmation()">
+          <button class="btn-icon" onclick="addAffirmation()">+</button>
+        </div>
+      </div>
+      <div class="glass profile-section">
+        <div class="section-title">Account</div>
+        <div style="display:flex;flex-direction:column;gap:0.7rem;">
+          <div style="font-size:0.82rem;color:var(--ts);">Signed in as</div>
+          <div style="font-size:0.9rem;" id="accountEmail">anonymous</div>
+          <button class="btn btn-secondary btn-sm" onclick="doLogout()" style="margin-top:0.5rem;width:fit-content;">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: ROUTINE
+═══════════════════════ -->
+<div class="page hidden" id="routinePage">
+  <div class="routine-tabs">
+    <button class="rtab active" onclick="switchRoutineTab('what')">📋 What to Do</button>
+    <button class="rtab" onclick="switchRoutineTab('breathe')">🫁 Breathe</button>
+    <button class="rtab" onclick="switchRoutineTab('checklist')">✅ Checklist</button>
+    <button class="rtab" onclick="switchRoutineTab('grounding')">🌱 Grounding</button>
+  </div>
+
+  <!-- Hotline Banner -->
+  <div style="margin:0.8rem 1.5rem 0;padding:1rem 1.4rem;border-radius:18px;background:rgba(25,65,28,0.62);border:1px solid rgba(160,230,165,0.35);backdrop-filter:blur(20px);box-shadow:0 4px 18px rgba(10,40,12,0.28),inset 0 1px 0 rgba(255,255,255,0.08);display:flex;align-items:center;gap:0.9rem;flex-wrap:wrap;">
+    <span style="font-size:1.4rem;flex-shrink:0;">💚</span>
+    <div style="flex:1;min-width:200px;">
+      <div style="font-size:0.8rem;color:rgba(210,248,213,0.82);line-height:1.6;margin-bottom:0.3rem;">If your anxiety feels unmanageable or persistent, please consider reaching out to a mental health professional. You deserve real support.</div>
+      <div style="font-size:0.84rem;font-weight:600;color:rgba(190,248,193,0.96);letter-spacing:0.03em;">
+        🇵🇭 Crisis line (PH): <span style="color:#a8f0ab;">1553</span> &nbsp;|&nbsp; iCall: <span style="color:#a8f0ab;">+63 2-8893-7603</span>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-content" style="padding-top:0.5rem;">
+    <div class="routine-section active" id="rtab-what">
+      <div style="padding:0.8rem 1.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--ts);">When anxiety arrives, do these in order.</div>
+      <div class="routine-grid">
+        <div class="glass routine-card"><div class="routine-num">01</div><div class="routine-step">First</div><div class="routine-title">Pause &amp; Acknowledge</div><div class="routine-body">Name what you're feeling. Say it out loud or in your head: "I am feeling anxious right now, and that is okay." Naming it reduces its power.</div><span class="routine-tag">⏱ 30 seconds</span></div>
+        <div class="glass routine-card"><div class="routine-num">02</div><div class="routine-step">Second</div><div class="routine-title">Breathe Slowly</div><div class="routine-body">Inhale for 4 counts, hold for 4, exhale for 6. Repeat 3–5 times. This activates your parasympathetic nervous system and calms the stress response.</div><span class="routine-tag">⏱ 2 minutes</span></div>
+        <div class="glass routine-card"><div class="routine-num">03</div><div class="routine-step">Third</div><div class="routine-title">Ground Yourself</div><div class="routine-body">Name 5 things you can see, 4 you can touch, 3 you hear, 2 you smell, 1 you taste. This pulls your mind back into the present moment.</div><span class="routine-tag">⏱ 3 minutes</span></div>
+        <div class="glass routine-card"><div class="routine-num">04</div><div class="routine-step">Fourth</div><div class="routine-title">Move Your Body</div><div class="routine-body">Even 5 minutes of walking, stretching, or gentle movement releases cortisol and shifts your energy. You don't need a workout — just move.</div><span class="routine-tag">⏱ 5 minutes</span></div>
+        <div class="glass routine-card"><div class="routine-num">05</div><div class="routine-step">Fifth</div><div class="routine-title">Hydrate &amp; Rest</div><div class="routine-body">Drink a full glass of water slowly. Anxiety often dehydrates us. Find a quiet place to sit, remove stimulants, and allow your nervous system to settle.</div><span class="routine-tag">⏱ 5 minutes</span></div>
+        <div class="glass routine-card"><div class="routine-num">06</div><div class="routine-step">Sixth</div><div class="routine-title">Express It</div><div class="routine-body">Write it down, talk to someone, or add a note to your Sage wall. Externalizing the feeling removes it from the loop in your mind.</div><span class="routine-tag">💬 Use Sage</span></div>
+      </div>
+    </div>
+    <div class="routine-section" id="rtab-breathe">
+      <div class="breathe-widget">
+        <div style="text-align:center;"><div style="font-family:'Cormorant Garamond',serif;font-size:1.8rem;font-weight:300;margin-bottom:0.3rem;">Box Breathing</div><div style="font-size:0.82rem;color:var(--ts);">Used by Navy SEALs and therapists alike to reset the nervous system.</div></div>
+        <div class="breathe-circle" id="breatheCircle" onclick="toggleBreathe()">
+          <div class="breathe-text" id="breatheText">Tap to start</div>
+          <div class="breathe-sub" id="breatheSub">4-4-4-4</div>
+        </div>
+        <div style="display:flex;gap:0.8rem;flex-wrap:wrap;justify-content:center;">
+          <div class="glass-sm" style="padding:0.8rem 1.2rem;text-align:center;min-width:90px;border-radius:14px;"><div style="font-size:1.3rem;font-weight:500;" id="breatheCount">0</div><div style="font-size:0.68rem;color:var(--tm);letter-spacing:0.1em;margin-top:2px;">CYCLES</div></div>
+          <div class="glass-sm" style="padding:0.8rem 1.2rem;text-align:center;min-width:90px;border-radius:14px;"><div style="font-size:1.3rem;font-weight:500;" id="breatheTime">0:00</div><div style="font-size:0.68rem;color:var(--tm);letter-spacing:0.1em;margin-top:2px;">ELAPSED</div></div>
+        </div>
+        <div class="glass" style="max-width:400px;padding:1.4rem 1.8rem;border-radius:20px;">
+          <div style="font-size:0.72rem;letter-spacing:0.12em;color:var(--tm);text-transform:uppercase;margin-bottom:0.8rem;">How it works</div>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;">
+            <div style="display:flex;align-items:center;gap:0.8rem;font-size:0.82rem;color:var(--ts);"><span style="width:28px;height:28px;border-radius:50%;background:rgba(150,195,153,0.28);display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;">↑</span>Inhale for 4 counts — fill your lungs fully</div>
+            <div style="display:flex;align-items:center;gap:0.8rem;font-size:0.82rem;color:var(--ts);"><span style="width:28px;height:28px;border-radius:50%;background:rgba(150,195,153,0.28);display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;">■</span>Hold for 4 counts — stay still</div>
+            <div style="display:flex;align-items:center;gap:0.8rem;font-size:0.82rem;color:var(--ts);"><span style="width:28px;height:28px;border-radius:50%;background:rgba(150,195,153,0.28);display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;">↓</span>Exhale for 4 counts — release fully</div>
+            <div style="display:flex;align-items:center;gap:0.8rem;font-size:0.82rem;color:var(--ts);"><span style="width:28px;height:28px;border-radius:50%;background:rgba(150,195,153,0.28);display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;">○</span>Hold empty for 4 counts — repeat</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="routine-section" id="rtab-checklist">
+      <div style="padding:0.8rem 1.5rem;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--ts);">Basic things to do when experiencing anxiety.</div>
+      <div class="check-list" id="checklistEl"></div>
+    </div>
+    <div class="routine-section" id="rtab-grounding">
+      <div style="padding:0.8rem 1.5rem 0;font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.1rem;color:var(--ts);margin-bottom:0.5rem;">The 5-4-3-2-1 technique. Use your senses to return to now.</div>
+      <div class="routine-grid" id="groundingGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: WALL
+═══════════════════════ -->
+<div class="page hidden" id="wallPage" style="overflow:hidden;">
+  <div class="wall-toolbar">
+    <span class="wall-title">My Wall</span>
+    <div style="display:flex;gap:0.4rem;align-items:center;" id="colorPicker"></div>
+    <button class="btn btn-primary btn-sm" onclick="openAddNote()">+ Add Note</button>
+    <button class="btn btn-secondary btn-sm" onclick="clearWall()">Clear all</button>
+  </div>
+  <div class="wall-canvas" id="wallCanvas">
+    <div class="wall-bg"></div>
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;" id="wallEmptyHint">
+      <div style="text-align:center;opacity:0.28;"><div style="font-size:3rem;margin-bottom:0.8rem;">📌</div><div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;letter-spacing:0.08em;">Pin your first thought</div><div style="font-size:0.8rem;margin-top:0.3rem;">Click "Add Note" to start</div></div>
+    </div>
+  </div>
+</div>
+<div class="add-note-modal" id="addNoteModal">
+  <div class="glass add-note-card">
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;margin-bottom:1rem;">New note</div>
+    <textarea class="note-textarea" id="noteText" placeholder="What's on your mind? A thought, a takeaway, a reminder…"></textarea>
+    <div style="margin:0.8rem 0 1rem;"><label class="input-label">Note color</label><div style="display:flex;gap:0.5rem;" id="modalColorPicker"></div></div>
+    <div style="display:flex;gap:0.7rem;">
+      <button class="btn btn-primary" style="flex:1;" onclick="addNote()">Pin it 📌</button>
+      <button class="btn btn-secondary" style="flex:1;" onclick="closeAddNote()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: FEED
+═══════════════════════ -->
+<div class="page hidden" id="feedPage">
+  <div class="feed-wrap">
+
+    <!-- Main Feed Column -->
+    <div class="feed-main">
+
+      <!-- Page header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;padding:0.4rem 0.2rem 0.2rem;">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;letter-spacing:0.04em;color:rgba(255,255,255,0.96);text-shadow:0 2px 12px rgba(0,0,0,0.3);">The Clearing</div>
+          <div style="font-size:0.8rem;color:rgba(200,245,202,0.65);margin-top:0.15rem;font-style:italic;">a space to share what's on your heart</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:0.6rem;background:rgba(20,55,22,0.55);border:1px solid rgba(130,205,135,0.3);border-radius:50px;padding:0.45rem 1rem;backdrop-filter:blur(16px);">
+          <span style="width:8px;height:8px;border-radius:50%;background:#82e88a;box-shadow:0 0 8px #82e88a;animation:pulse 2s infinite;display:inline-block;"></span>
+          <span style="font-size:0.76rem;color:rgba(190,245,193,0.85);" id="feedOnlineCount">247 in the clearing</span>
+        </div>
+      </div>
+
+      <!-- Composer — hidden by default, shown via Write button -->
+      <div id="composerWrap" style="display:none;">
+        <div class="feed-glass composer" id="feedComposer">
+          <div class="composer-body">
+            <div class="composer-av" id="composerAv">🌙</div>
+            <textarea class="composer-field" id="composerText" placeholder="What's on your heart today? Share openly — this space is for feelings, reflections, and honest thoughts." maxlength="500" oninput="updateCharCount()"></textarea>
+          </div>
+          <div id="mediaPreviewStrip" class="media-preview-strip" style="display:none;"></div>
+          <div class="media-upload-bar">
+            <label class="media-upload-btn" title="Add photo">
+              <span>🖼️</span> Photo
+              <input type="file" accept="image/*" multiple style="display:none;" onchange="handleMediaUpload(this,'image')">
+            </label>
+            <label class="media-upload-btn" title="Add video">
+              <span>🎬</span> Video
+              <input type="file" accept="video/*" style="display:none;" onchange="handleMediaUpload(this,'video')">
+            </label>
+            <span id="mediaCount" style="font-size:0.7rem;color:rgba(180,230,183,0.55);"></span>
+          </div>
+          <div class="composer-actions">
+            <div class="tag-pills" id="tagPills"></div>
+            <div style="display:flex;align-items:center;gap:0.7rem;">
+              <span class="char-count" id="charCount">500</span>
+              <button class="post-btn" onclick="submitPost()">Share 🕊️</button>
+            </div>
+          </div>
+          <div id="rejectNotice" style="display:none;"></div>
+        </div>
+      </div>
+
+      <!-- Write button to open composer -->
+      <button class="write-btn" id="writeBtn" onclick="toggleComposer()">
+        <span>✦</span> Write something
+      </button>
+
+      <!-- Filter bar -->
+      <div class="feed-filter-bar" id="feedFilterBar"></div>
+
+      <!-- Posts -->
+      <div id="feedPosts" style="display:flex;flex-direction:column;gap:0.85rem;"></div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="feed-sidebar">
+
+      <!-- Guidelines widget -->
+      <div class="sidebar-widget">
+        <div class="widget-title">Community Guidelines</div>
+        <div class="guideline-item"><div class="gl-dot"></div>Share feelings, thoughts, and mental wellness experiences only</div>
+        <div class="guideline-item"><div class="gl-dot"></div>Be kind — no hate, mockery, or harsh judgment</div>
+        <div class="guideline-item"><div class="gl-dot"></div>No unrelated topics (politics, entertainment, sports, etc.)</div>
+        <div class="guideline-item"><div class="gl-dot"></div>You may post anonymously — your identity is always protected</div>
+        <div class="guideline-item"><div class="gl-dot"></div>Support each other — a kind comment can change someone's day</div>
+      </div>
+
+      <!-- Trending tags -->
+      <div class="sidebar-widget">
+        <div class="widget-title">Trending Feelings</div>
+        <div id="trendingTags"></div>
+      </div>
+
+      <!-- Quick quote -->
+      <div class="sidebar-widget">
+        <div style="font-family:'Cormorant Garamond',serif;font-style:italic;font-size:1.05rem;color:rgba(220,250,222,0.82);line-height:1.75;" id="sidebarQuote"></div>
+        <div style="font-size:0.68rem;color:rgba(170,225,173,0.55);margin-top:0.7rem;letter-spacing:0.06em;" id="sidebarQuoteAuthor"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: CHAT
+═══════════════════════ -->
+<div class="page hidden" id="chatPage">
+  <div class="chat-wrap">
+    <div class="glass-sm" style="display:flex;align-items:center;justify-content:space-between;padding:0.7rem 1.1rem;flex-shrink:0;border-radius:16px;">
+      <div style="display:flex;align-items:center;gap:0.6rem;">
+        <span style="width:8px;height:8px;border-radius:50%;background:#82e88a;box-shadow:0 0 7px #82e88a;animation:pulse 2s infinite;display:inline-block;"></span>
+        <span style="font-size:0.8rem;color:var(--ts);" id="chatStatus">Searching…</span>
+      </div>
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+        <button class="ctrl-btn" id="btnCam" onclick="toggleCam()"><span class="ctrl-icon" id="camIcon">📷</span><span id="camLbl">Show me</span></button>
+        <button class="ctrl-btn" id="btnMic" onclick="toggleMic()"><span class="ctrl-icon" id="micIcon">🎙️</span><span id="micLbl">Mute</span></button>
+        <button class="btn-next" onclick="nextStranger()">Next →</button>
+        <button class="ctrl-btn danger" onclick="navigate('home')"><span class="ctrl-icon">✕</span><span>Leave</span></button>
+      </div>
+    </div>
+    <div class="video-grid" style="flex:1;min-height:0;">
+      <div class="video-panel">
+        <div class="conn-overlay" id="connOverlay"><div class="spin-ring"></div><span style="font-size:0.78rem;color:var(--ts);letter-spacing:0.08em;">finding someone…</span></div>
+        <div class="stranger-inner" id="strangerInner" style="display:none;">
+          <div id="strangerAv" style="width:72px;height:72px;border-radius:50%;background:rgba(150,200,153,0.22);border:2px solid rgba(190,240,193,0.45);display:flex;align-items:center;justify-content:center;font-size:1.8rem;animation:breathe 3s ease-in-out infinite;box-shadow:inset 0 1px 0 rgba(255,255,255,0.2);">🌿</div>
+          <div class="wave-row"><span></span><span></span><span></span><span></span><span></span></div>
+          <span id="strangerName" style="font-size:0.75rem;color:rgba(255,255,255,0.8);letter-spacing:0.1em;font-weight:500;">stranger</span>
+          <div style="display:flex;gap:0.5rem;margin-top:0.3rem;">
+            <button onclick="addStrangerAsFriend()" id="addFriendBtn" style="background:rgba(100,175,103,0.7);border:1px solid rgba(190,240,193,0.6);border-radius:50px;color:#fff;padding:0.35rem 0.95rem;font-size:0.72rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;font-weight:500;">🫂 Add Friend</button>
+            <button onclick="viewStrangerProfile()" style="background:rgba(150,195,153,0.3);border:1px solid rgba(200,240,203,0.5);border-radius:50px;color:rgba(230,255,232,0.88);padding:0.35rem 0.95rem;font-size:0.72rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;">👤 Profile</button>
+          </div>
+        </div>
+        <div class="video-overlay"><span class="v-label" id="strangerLabel">stranger</span><span style="font-size:0.68rem;color:var(--tm);" id="strangerHandleLabel">anonymous</span></div>
+      </div>
+      <div class="video-panel" id="myVPanel">
+        <video id="myVid" autoplay muted playsinline style="display:none;"></video>
+        <div class="anon-av" id="myAnonAv"><div class="anon-ring">🌙</div><span style="font-size:0.7rem;color:var(--tm);letter-spacing:0.08em;">hidden</span></div>
+        <div class="video-overlay"><span class="v-label">you</span><span style="font-size:0.68rem;color:var(--tm);" id="myVislbl">hidden</span></div>
+      </div>
+    </div>
+    <div class="inline-chat" style="flex-shrink:0;">
+      <div class="chat-msgs" id="chatMsgs"><div style="font-size:0.72rem;color:var(--tm);text-align:center;padding:0.4rem;" id="chatEmpty">Messages appear here</div></div>
+      <div class="chat-row"><input class="chat-in" id="chatInput" placeholder="say something…" onkeydown="if(event.key==='Enter')sendMsg()"><button class="chat-send" onclick="sendMsg()">→</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: ABOUT US
+═══════════════════════ -->
+<div class="page hidden" id="aboutPage">
+  <div class="scroll-content" style="display:flex;flex-direction:column;align-items:center;padding:3.5rem 1.5rem 5rem;">
+
+    <!-- Header -->
+    <div style="text-align:center;max-width:560px;margin-bottom:3rem;animation:fadeUp 0.7s ease both;">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:clamp(2.2rem,6vw,3.8rem);font-weight:300;letter-spacing:0.1em;color:rgba(12,42,15,0.97);line-height:1.1;">
+        the people<br><em style="font-style:italic;color:rgba(60,110,63,0.82);">behind sage</em>
+      </div>
+      <p style="margin-top:1.2rem;font-size:0.92rem;color:rgba(22,62,25,0.82);line-height:1.75;font-family:'DM Sans',sans-serif;">
+        Sage was born from a quiet belief — that everyone deserves a space to say what they've been holding inside. We built this with care, with empathy, and with you in mind.
+      </p>
+    </div>
+
+    <!-- Mission Statement -->
+    <div id="missionCard" style="max-width:620px;width:100%;padding:2.6rem 2.8rem 2.8rem;border-radius:24px;text-align:center;margin-bottom:3rem;animation:fadeUp 0.7s 0.1s ease both;background:rgba(220,238,222,0.35);border:1px solid rgba(255,255,255,0.55);backdrop-filter:blur(28px) saturate(160%);-webkit-backdrop-filter:blur(28px) saturate(160%);box-shadow:0 8px 32px rgba(80,120,85,0.16),0 1px 0 rgba(255,255,255,0.6) inset;">
+      <div style="font-size:0.68rem;letter-spacing:0.18em;color:rgba(38,80,41,0.72);text-transform:uppercase;font-weight:700;margin-bottom:1.2rem;">Our Mission</div>
+      <p style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-style:italic;color:rgba(15,50,18,0.9);line-height:2;">
+        "To create a gentle, safe space where people can speak their unsaid feelings, find connection, and begin to heal — without fear of judgment."
+      </p>
+    </div>
+
+    <!-- Creator circles -->
+    <div style="font-size:0.68rem;letter-spacing:0.18em;color:rgba(38,80,41,0.72);text-transform:uppercase;font-weight:700;margin-bottom:2rem;animation:fadeUp 0.7s 0.15s ease both;">Meet the Creators</div>
+
+    <div class="creators-row">
+
+      <!-- Creator 1 -->
+      <div class="creator-card" style="animation-delay:0.2s;">
+        <div class="creator-ring">
+          <div class="creator-avatar" style="width:100%;height:100%;border-radius:50%;overflow:hidden;display:flex;align-items:center;justify-content:center;"><img src="jum.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;display:block;"></div>
+          <div class="creator-ring-glow"></div>
+        </div>
+        <div class="creator-name">Lyra Basilio</div>
+        <div class="creator-role">Co-founder · Project & Brain</div>
+        <p class="creator-bio">Passionate about making mental health accessible through thoughtful, human-centered design. Believes beautiful spaces invite honest conversations.</p>
+        <div class="creator-tags">
+          <span class="creator-tag">🥷 Hustler</span>
+          <span class="creator-tag">🧑‍💼 Project Manager</span>
+        </div>
+      </div>
+
+      <!-- Creator 2 — center, slightly elevated -->
+      <div class="creator-card creator-center" style="animation-delay:0.28s;">
+        <div class="creator-ring creator-ring-main">
+          <img src="rhand.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center 15%;border-radius:50%;display:block;">
+          <div class="creator-ring-glow"></div>
+        </div>
+        <div class="creator-name">Rhandell Villaflores</div>
+        <div class="creator-role">Co-founder · Interactive & Developing</div>
+        <p class="creator-bio">Built Sage from scratch with the conviction that technology can hold space for vulnerability. Started journaling at 14 and never stopped.</p>
+        <div class="creator-tags">
+          <span class="creator-tag">🤖 Hacker</span>
+          <span class="creator-tag">⚙️ Web Developer</span>
+        </div>
+      </div>
+
+      <!-- Creator 3 -->
+      <div class="creator-card" style="animation-delay:0.36s;">
+        <div class="creator-ring">
+          <img src="chr.jpg" style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:50%;display:block;">
+          <div class="creator-ring-glow"></div>
+        </div>
+        <div class="creator-name">Christian Tubo</div>
+        <div class="creator-role">Co-founder · Design & Visual</div>
+        <p class="creator-bio">Community builder and mental wellness advocate. Shaped every word in Sage to feel like a warm hand on your shoulder, not a clinical form.</p>
+        <div class="creator-tags">
+          <span class="creator-tag">👨‍🎨 Hipster</span>
+          <span class="creator-tag">🎨 Visual Designer</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom note -->
+    <div class="glass" style="max-width:540px;width:100%;padding:2.2rem 2.4rem;border-radius:22px;text-align:center;margin-top:3rem;animation:fadeUp 0.7s 0.4s ease both;min-height:unset;overflow:visible;">
+      <div style="font-size:1.6rem;margin-bottom:0.9rem;">🌿</div>
+      <p style="font-size:0.9rem;color:rgba(18,55,21,0.88);line-height:1.8;position:relative;z-index:2;font-weight:400;">
+        Sage is independent, ad-free, and built purely for you. If it has helped you feel a little less alone, that is everything to us.
+      </p>
+      <div style="margin-top:1.2rem;font-size:0.75rem;color:rgba(50,95,53,0.6);letter-spacing:0.06em;position:relative;z-index:2;">made with quiet love · sage © 2025</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════
+     PAGE: FRIENDS
+═══════════════════════ -->
+<div class="page hidden" id="friendsPage">
+  <!-- Friends sub-view switcher (friends list vs messages) -->
+  <div id="friendsView" style="display:flex;flex:1;min-height:0;overflow:hidden;">
+
+    <!-- LEFT: Friends & Discovery Panel -->
+    <div class="friends-wrap" id="friendsListPanel" style="display:flex;flex:1;min-height:0;">
+      <div class="friends-main">
+        <div style="padding:0.4rem 0.2rem 0;">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.9rem;font-weight:300;letter-spacing:0.04em;color:rgba(12,40,15,0.97);">Friends</div>
+          <div style="font-size:0.8rem;color:rgba(40,80,43,0.65);margin-top:0.15rem;font-style:italic;">people who get it</div>
+        </div>
+        <div class="friends-search-bar">
+          <input type="text" id="friendSearch" placeholder="🔍  Search by username or emoji…" oninput="searchFriends(this.value)">
+          <button class="f-btn f-btn-primary" onclick="searchFriends(document.getElementById('friendSearch').value)" style="white-space:nowrap;">Search</button>
+        </div>
+        <div class="friends-tabs">
+          <button class="ftab active" id="ftab-friends" onclick="switchFTab('friends')">My Friends <span class="badge" id="friendCount" style="background:rgba(100,155,103,0.7);">0</span></button>
+          <button class="ftab" id="ftab-requests" onclick="switchFTab('requests')">Requests <span class="badge" id="reqCount" style="display:none;">0</span></button>
+          <button class="ftab" id="ftab-search" onclick="switchFTab('search')">Discover</button>
+          <button class="ftab" id="ftab-messages" onclick="switchFTab('messages')" style="position:relative;">Messages <span class="badge" id="unreadBadge" style="display:none;">0</span></button>
+        </div>
+        <div id="fpanel-friends"></div>
+        <div id="fpanel-requests" style="display:none;"></div>
+        <div id="fpanel-search" style="display:none;"></div>
+        <div id="fpanel-messages" style="display:none;"></div>
+      </div>
+      <div class="friends-sidebar">
+        <div style="font-size:0.7rem;letter-spacing:0.14em;color:rgba(35,78,38,0.82);text-transform:uppercase;font-weight:700;margin-bottom:0.2rem;">People You May Know</div>
+        <div id="friendSuggestions"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FULL SCREEN MESSAGING VIEW (overlays the friends page) -->
+<div id="messagingView" style="position:fixed;inset:0;left:var(--nav-w);z-index:50;display:none;background:rgba(184,206,188,0.96);backdrop-filter:blur(28px);">
+  <div style="display:flex;height:100%;min-height:0;">
+
+    <!-- Conversation list sidebar -->
+    <div id="convList" style="width:300px;min-width:260px;border-right:1px solid rgba(255,255,255,0.32);display:flex;flex-direction:column;background:rgba(168,200,171,0.4);flex-shrink:0;">
+      <!-- Header -->
+      <div style="padding:1.2rem 1.2rem 0.8rem;border-bottom:1px solid rgba(255,255,255,0.28);display:flex;align-items:center;justify-content:space-between;">
+        <div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:rgba(10,40,13,0.97);letter-spacing:0.04em;">Messages</div>
+          <div style="font-size:0.72rem;color:rgba(40,80,43,0.6);margin-top:1px;">your conversations</div>
+        </div>
+        <button onclick="closeMessaging()" style="background:rgba(190,220,193,0.45);border:1px solid rgba(255,255,255,0.52);border-radius:50px;padding:0.4rem 0.9rem;font-size:0.75rem;color:rgba(25,60,28,0.85);cursor:pointer;font-family:'DM Sans',sans-serif;">✕ Close</button>
+      </div>
+      <!-- New message search -->
+      <div style="padding:0.8rem 1rem;border-bottom:1px solid rgba(255,255,255,0.2);">
+        <input id="msgSearchInput" placeholder="🔍 Search friends…" oninput="filterConvList(this.value)" style="width:100%;background:rgba(220,238,222,0.55);border:1px solid rgba(255,255,255,0.55);border-radius:50px;padding:0.55rem 1rem;color:rgba(25,55,28,0.9);font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;">
+      </div>
+      <!-- Conversation list -->
+      <div id="convListItems" style="flex:1;overflow-y:auto;padding:0.5rem 0;scrollbar-width:thin;scrollbar-color:rgba(180,220,183,0.2) transparent;"></div>
+    </div>
+
+    <!-- Chat area -->
+    <div id="chatArea" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+
+      <!-- Empty state -->
+      <div id="chatEmpty_msg" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.8rem;opacity:0.45;">
+        <div style="font-size:3rem;">💬</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;color:rgba(18,52,21,0.8);">Select a conversation</div>
+        <div style="font-size:0.8rem;color:rgba(40,80,43,0.55);">or start a new one from your friends list</div>
+      </div>
+
+      <!-- Active conversation -->
+      <div id="activeChat" style="display:none;flex-direction:column;flex:1;min-height:0;">
+        <!-- Chat header -->
+        <div id="chatHeader" style="padding:1rem 1.4rem;border-bottom:1px solid rgba(255,255,255,0.28);display:flex;align-items:center;gap:0.9rem;background:rgba(190,220,193,0.3);flex-shrink:0;">
+          <div id="chatHeaderAv" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.7),rgba(110,155,113,0.6));border:2px solid rgba(255,255,255,0.62);display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;cursor:pointer;" onclick="openUserProfile(activeChatUser)">🌿</div>
+          <div style="flex:1;">
+            <div id="chatHeaderName" style="font-size:0.95rem;font-weight:600;color:rgba(10,42,13,0.97);cursor:pointer;" onclick="openUserProfile(activeChatUser)">Friend</div>
+            <div id="chatHeaderStatus" style="font-size:0.7rem;color:rgba(50,95,53,0.65);">🟢 Active now</div>
+          </div>
+          <button onclick="openUserProfile(activeChatUser)" style="background:rgba(185,218,188,0.45);border:1px solid rgba(255,255,255,0.5);border-radius:50px;padding:0.38rem 0.9rem;font-size:0.74rem;color:rgba(25,60,28,0.85);cursor:pointer;font-family:'DM Sans',sans-serif;">👤 Profile</button>
+        </div>
+
+        <!-- Messages area -->
+        <div id="msgArea" style="flex:1;overflow-y:auto;padding:1.2rem 1.4rem;display:flex;flex-direction:column;gap:0.7rem;scrollbar-width:thin;scrollbar-color:rgba(180,220,183,0.2) transparent;"></div>
+
+        <!-- Typing indicator -->
+        <div id="typingIndicator" style="display:none;padding:0 1.4rem 0.5rem;">
+          <div style="display:inline-flex;align-items:center;gap:0.5rem;background:rgba(210,232,212,0.5);border:1px solid rgba(255,255,255,0.48);border-radius:50px;padding:0.35rem 0.9rem;">
+            <span style="font-size:0.75rem;color:rgba(35,78,38,0.72);" id="typingName">Friend</span>
+            <span style="display:flex;gap:3px;align-items:center;">
+              <span style="width:5px;height:5px;border-radius:50%;background:rgba(80,140,83,0.6);animation:pulse 1.2s ease infinite;"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:rgba(80,140,83,0.6);animation:pulse 1.2s ease infinite 0.2s;"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:rgba(80,140,83,0.6);animation:pulse 1.2s ease infinite 0.4s;"></span>
+            </span>
+          </div>
+        </div>
+
+        <!-- Message input -->
+        <div style="padding:0.9rem 1.2rem;border-top:1px solid rgba(255,255,255,0.28);background:rgba(190,220,193,0.25);flex-shrink:0;">
+          <div style="display:flex;gap:0.6rem;align-items:flex-end;">
+            <div style="flex:1;background:rgba(225,242,226,0.72);border:1.5px solid rgba(255,255,255,0.6);border-radius:20px;padding:0.7rem 1rem;display:flex;align-items:center;gap:0.6rem;transition:border-color 0.2s;box-shadow:inset 0 1px 3px rgba(80,120,85,0.06);">
+              <textarea id="msgInput" placeholder="Type a message…" rows="1" onkeydown="handleMsgKey(event)" oninput="autoResizeMsgInput(this)" style="flex:1;background:transparent;border:none;outline:none;color:rgba(14,44,17,0.92);font-family:'DM Sans',sans-serif;font-size:0.9rem;resize:none;max-height:100px;line-height:1.5;overflow-y:auto;scrollbar-width:thin;"></textarea>
+              <label title="Send image" style="cursor:pointer;font-size:1.1rem;opacity:0.55;flex-shrink:0;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.55'">
+                🖼️<input type="file" accept="image/*" style="display:none;" onchange="sendMsgImage(this)">
+              </label>
+            </div>
+            <button onclick="sendMessage()" id="sendMsgBtn" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,rgba(100,155,103,0.78),rgba(70,120,73,0.7));border:1px solid rgba(255,255,255,0.5);display:flex;align-items:center;justify-content:center;font-size:1.1rem;cursor:pointer;flex-shrink:0;box-shadow:0 3px 12px rgba(70,110,75,0.28);transition:all 0.2s;">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- DM Modal removed — replaced by Messaging View -->
+
+<!-- User Profile Modal -->
+<div id="userProfileModal" style="position:fixed;inset:0;background:rgba(25,55,28,0.55);backdrop-filter:blur(16px);z-index:400;display:none;align-items:center;justify-content:center;padding:1rem;">
+  <div class="glass" style="width:420px;max-width:96vw;border-radius:28px;padding:0;overflow:hidden;animation:pop 0.3s ease both;position:relative;">
+    <!-- Header banner -->
+    <div style="background:linear-gradient(135deg,rgba(130,185,133,0.55),rgba(80,140,83,0.45));padding:2rem 2rem 1.2rem;position:relative;">
+      <button onclick="closeUserProfile()" style="position:absolute;top:1rem;right:1rem;background:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.45);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:0.85rem;color:rgba(20,50,23,0.9);font-weight:700;">✕</button>
+      <div style="display:flex;align-items:center;gap:1.1rem;">
+        <div id="upAv" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,rgba(160,200,163,0.7),rgba(110,155,113,0.6));border:2.5px solid rgba(255,255,255,0.65);display:flex;align-items:center;justify-content:center;font-size:2rem;flex-shrink:0;box-shadow:0 4px 16px rgba(80,120,85,0.22);">🌿</div>
+        <div>
+          <div id="upName" style="font-family:'Cormorant Garamond',serif;font-size:1.5rem;font-weight:300;color:rgba(10,42,13,0.97);">User</div>
+          <div id="upHandle" style="font-size:0.75rem;color:rgba(40,80,43,0.72);letter-spacing:0.06em;margin-top:2px;">@user · sage</div>
+        </div>
+      </div>
+    </div>
+    <!-- Body -->
+    <div style="padding:1.4rem 2rem 1.8rem;display:flex;flex-direction:column;gap:1rem;">
+      <div id="upBio" style="font-size:0.85rem;color:rgba(22,58,25,0.82);line-height:1.72;font-style:italic;"></div>
+      <!-- Stats row -->
+      <div style="display:flex;gap:1.5rem;padding:0.9rem 1rem;background:rgba(210,235,212,0.38);border:1px solid rgba(255,255,255,0.5);border-radius:14px;">
+        <div style="text-align:center;flex:1;">
+          <div id="upPosts" style="font-size:1.3rem;font-weight:600;color:rgba(10,42,13,0.96);">0</div>
+          <div style="font-size:0.68rem;color:rgba(50,90,53,0.62);letter-spacing:0.08em;margin-top:1px;">POSTS</div>
+        </div>
+        <div style="text-align:center;flex:1;border-left:1px solid rgba(180,215,183,0.4);">
+          <div id="upFriends" style="font-size:1.3rem;font-weight:600;color:rgba(10,42,13,0.96);">0</div>
+          <div style="font-size:0.68rem;color:rgba(50,90,53,0.62);letter-spacing:0.08em;margin-top:1px;">FRIENDS</div>
+        </div>
+        <div style="text-align:center;flex:1;border-left:1px solid rgba(180,215,183,0.4);">
+          <div id="upDays" style="font-size:1.3rem;font-weight:600;color:rgba(10,42,13,0.96);">0</div>
+          <div style="font-size:0.68rem;color:rgba(50,90,53,0.62);letter-spacing:0.08em;margin-top:1px;">DAYS</div>
+        </div>
+      </div>
+      <!-- Recent posts -->
+      <div>
+        <div style="font-size:0.7rem;letter-spacing:0.12em;color:rgba(38,80,41,0.72);text-transform:uppercase;font-weight:700;margin-bottom:0.7rem;">Recent Feelings</div>
+        <div id="upPosts_list" style="display:flex;flex-direction:column;gap:0.5rem;"></div>
+      </div>
+      <!-- Actions -->
+      <div style="display:flex;gap:0.65rem;margin-top:0.3rem;">
+        <button id="upAddBtn" onclick="addFriendFromProfile()" class="f-btn f-btn-primary" style="flex:1;padding:0.65rem;font-size:0.85rem;text-align:center;">🫂 Add Friend</button>
+        <button id="upMsgBtn" onclick="msgFromProfile()" class="f-btn f-btn-secondary" style="flex:1;padding:0.65rem;font-size:0.85rem;text-align:center;">💬 Message</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <div class="lightbox-inner" onclick="event.stopPropagation()">
+    <div class="lightbox-close" onclick="closeLightbox()">✕</div>
+    <img id="lightboxImg" src="" style="display:none;">
+    <video id="lightboxVid" src="" controls style="display:none;border-radius:16px;"></video>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+let currentUser={name:'Anonymous',email:'',isAnon:true,emoji:'🌙'};
+let stickyNotes=[],affirmations=[],selectedNoteColor='#fef9c3';
+let isCamOn=false,isMicMuted=false,chatConnected=false,videoStream=null;
+let breatheActive=false,breathePhase=0,breatheInterval=null,breatheTimer=null,breatheSeconds=0,breatheCycles=0;
+
+const noteColors=[{hex:'#fef9c3',l:'Cream'},{hex:'#d1fae5',l:'Mint'},{hex:'#e0f2fe',l:'Sky'},{hex:'#fce7f3',l:'Blush'},{hex:'#ede9fe',l:'Lavender'},{hex:'#ffedd5',l:'Peach'}];
+const checklist=[
+  {t:'Accept the feeling',d:"Don't fight it — tell yourself it's temporary and won't hurt you."},
+  {t:'Slow your breathing',d:'Take 3 slow breaths: in through nose 4 counts, out through mouth 6 counts.'},
+  {t:'Sit or lie down',d:'Get your body into a physically safe, still position. Uncross your arms and legs.'},
+  {t:'Drink cold water',d:'Sip slowly. The sensation disrupts the anxiety loop and grounds your body.'},
+  {t:'Remove yourself from stressors',d:'If possible, step outside or into a quieter space for a few minutes.'},
+  {t:'Text or call someone',d:"You don't have to explain everything. Just say 'I need a moment with you.'"},
+  {t:'Avoid caffeine & screens',d:'Both amplify adrenaline and anxiety. Step away for at least 10 minutes.'},
+  {t:'Write it down',d:"Externalizing the fear onto paper removes it from the mental loop. Don't edit — just write."},
+  {t:'Remind yourself it will pass',d:"Anxiety peaks within 10 minutes and always subsides. This moment is temporary."},
+  {t:'Be gentle with yourself',d:'You are not broken. You are human, responding to something that feels overwhelming.'},
+];
+const groundingSteps=[
+  {num:5,e:'👀',s:'See',p:'Name 5 things you can see right now.',x:'a chair, a window, your hands, a plant, the sky'},
+  {num:4,e:'🖐️',s:'Touch',p:'Name 4 things you can physically feel.',x:'the floor, your clothes, air temperature, a surface near you'},
+  {num:3,e:'👂',s:'Hear',p:'Name 3 sounds you can hear.',x:'distant traffic, your own breath, a fan humming'},
+  {num:2,e:'👃',s:'Smell',p:'Name 2 things you can smell.',x:'fresh air, your own skin, something nearby'},
+  {num:1,e:'👅',s:'Taste',p:'Name 1 thing you can taste.',x:'the inside of your mouth, a recent drink'},
+];
+const chatResponses=["I feel that too.","That takes courage to say.","You're not alone in that.","Thank you for sharing.","I've never told anyone, but… same.","This space feels safe somehow.","It's freeing to just say it.","I hear you.","How long have you held onto that?","Really? I thought I was the only one."];
+
+document.addEventListener('DOMContentLoaded',()=>{
+  buildColorPickers();buildChecklist();buildGrounding();
+  document.getElementById('checkDate').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+});
+
+/* ── AUTH ── */
+function switchTab(t){
+  document.getElementById('tabLogin').classList.toggle('active',t==='login');
+  document.getElementById('tabSignup').classList.toggle('active',t==='signup');
+  document.getElementById('loginForm').style.display=t==='login'?'flex':'none';
+  document.getElementById('signupForm').style.display=t==='signup'?'flex':'none';
+  document.getElementById('authTitle').textContent=t==='login'?'Welcome back':'Create account';
+}
+function doLogin(){
+  const e=document.getElementById('loginEmail').value.trim(),p=document.getElementById('loginPass').value;
+  if(!e||!p){showToast('Please fill in all fields');return;}
+  currentUser={name:cap(e.split('@')[0]),email:e,isAnon:false,emoji:'🌿'};enterApp();
+}
+function doSignup(){
+  const n=document.getElementById('signupName').value.trim(),e=document.getElementById('signupEmail').value.trim(),p=document.getElementById('signupPass').value;
+  if(!n||!e||!p){showToast('Please fill in all fields');return;}
+  currentUser={name:cap(n),email:e,isAnon:false,emoji:'🌿'};enterApp();
+}
+function continueAnon(){currentUser={name:'Anonymous',email:'',isAnon:true,emoji:'🌙'};enterApp();}
+function enterApp(){
+  document.getElementById('loginPage').classList.add('hidden');
+  document.getElementById('sideNav').classList.remove('hidden');
+  document.getElementById('app').classList.add('nav-active');
+  loadWallNotes();updateProfileUI();updateGreeting();navigate('home');
+  showToast('Welcome to Sage 🌿');
+}
+function doLogout(){
+  currentUser={name:'Anonymous',email:'',isAnon:true,emoji:'🌙'};
+  ['homePage','profilePage','routinePage','wallPage','chatPage'].forEach(p=>document.getElementById(p).classList.add('hidden'));
+  document.getElementById('sideNav').classList.add('hidden');
+  document.getElementById('app').classList.remove('nav-active');
+  document.getElementById('loginPage').classList.remove('hidden');
+  if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}
+  stopBreathe();showToast('Signed out safely 🌫️');
+}
+function cap(s){return s.charAt(0).toUpperCase()+s.slice(1);}
+
+/* ── NAV ── */
+const pages={home:'homePage',profile:'profilePage',routine:'routinePage',wall:'wallPage',chat:'chatPage',feed:'feedPage',about:'aboutPage',friends:'friendsPage'};
+function navigate(page){
+  Object.keys(pages).forEach(k=>document.getElementById(pages[k]).classList.toggle('hidden',k!==page));
+  document.querySelectorAll('.snav-btn').forEach(b=>b.classList.remove('active'));
+  const nb=document.getElementById('nav'+cap(page));if(nb)nb.classList.add('active');
+  if(page==='chat')initChat();
+  if(page==='wall')renderWall();
+  if(page==='profile'){updateProfileUI();updateStats();}
+  if(page==='feed')initFeed();
+  if(page==='friends')initFriends();
+}
+
+/* ── PROFILE ── */
+function updateGreeting(){
+  const h=new Date().getHours(),g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  const el=document.getElementById('homeGreeting');if(el)el.textContent=g+', '+(currentUser.isAnon?'friend':currentUser.name)+'.';
+}
+function updateProfileUI(){
+  document.getElementById('profileNameEl').textContent=currentUser.name;
+  document.getElementById('profileHandleEl').textContent=`@${currentUser.name.toLowerCase().replace(/\s/g,'_')} · sage`;
+  document.getElementById('profileEmoji').textContent=currentUser.emoji;
+  document.getElementById('navAvatar').textContent=currentUser.emoji;
+  document.getElementById('accountEmail').textContent=currentUser.email||'anonymous session';
+}
+function updateStats(){
+  document.getElementById('statNotes').textContent=stickyNotes.length;
+  document.getElementById('statSessions').textContent=localStorage.getItem('sageSessions')||'0';
+}
+function selectMoodChip(el){document.querySelectorAll('.mood-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');}
+function editBio(){const d=document.getElementById('bioDisplay'),e=document.getElementById('bioEdit');e.value=d.dataset.val||'';d.style.display='none';e.style.display='block';e.focus();}
+function saveBio(){const d=document.getElementById('bioDisplay'),e=document.getElementById('bioEdit'),v=e.value.trim();d.dataset.val=v;d.textContent=v||'Click to add a little something about yourself…';d.style.display='block';e.style.display='none';}
+function addAffirmation(){const i=document.getElementById('affirmInput'),t=i.value.trim();if(!t)return;affirmations.push(t);renderAffirmations();i.value='';}
+function renderAffirmations(){const el=document.getElementById('affirmList');el.innerHTML='';affirmations.forEach((a,i)=>{const d=document.createElement('div');d.style.cssText='display:flex;align-items:flex-start;gap:0.5rem;font-size:0.82rem;color:rgba(255,255,255,0.72);';d.innerHTML=`<span style="color:rgba(190,240,193,0.65);flex-shrink:0;">✦</span><span style="flex:1;">${a}</span><button onclick="removeAffirmation(${i})" style="background:none;border:none;color:rgba(255,255,255,0.3);cursor:pointer;font-size:0.75rem;">✕</button>`;el.appendChild(d);});}
+function removeAffirmation(i){affirmations.splice(i,1);renderAffirmations();}
+const avatarEmojis=['🌙','🌿','🌊','🌸','🌻','🦋','🌺','✨','🍃','🌷','🌱','🌼'];
+let emojiIdx=0;
+function changeAvatar(){emojiIdx=(emojiIdx+1)%avatarEmojis.length;currentUser.emoji=avatarEmojis[emojiIdx];updateProfileUI();showToast('Avatar updated!');}
+function updateMood(){showToast('Mood noted '+document.getElementById('moodSelect').value);}
+
+/* ── BREATHE ── */
+const bPhases=[{l:'Inhale',d:4,sc:'scale(1.32)'},{l:'Hold',d:4,sc:'scale(1.32)'},{l:'Exhale',d:4,sc:'scale(1)'},{l:'Hold',d:4,sc:'scale(1)'}];
+function switchRoutineTab(tab){
+  document.querySelectorAll('.rtab').forEach((b,i)=>b.classList.toggle('active',['what','breathe','checklist','grounding'][i]===tab));
+  document.querySelectorAll('.routine-section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('rtab-'+tab).classList.add('active');
+}
+function toggleBreathe(){breatheActive?stopBreathe():startBreathe();}
+function startBreathe(){breatheActive=true;breathePhase=0;breatheSeconds=0;breatheCycles=0;breatheTimer=setInterval(()=>{breatheSeconds++;const m=Math.floor(breatheSeconds/60),s=breatheSeconds%60;document.getElementById('breatheTime').textContent=m+':'+(s<10?'0':'')+s;},1000);runPhase();}
+function runPhase(){if(!breatheActive)return;const p=bPhases[breathePhase],c=document.getElementById('breatheCircle');document.getElementById('breatheText').textContent=p.l;document.getElementById('breatheSub').textContent=p.d+' counts';c.style.transition='transform '+p.d+'s ease, box-shadow '+p.d+'s ease';c.style.transform=p.sc;breatheInterval=setTimeout(()=>{breathePhase=(breathePhase+1)%4;if(breathePhase===0){breatheCycles++;document.getElementById('breatheCount').textContent=breatheCycles;}runPhase();},p.d*1000);}
+function stopBreathe(){breatheActive=false;clearTimeout(breatheInterval);clearInterval(breatheTimer);const c=document.getElementById('breatheCircle');c.style.transform='scale(1)';document.getElementById('breatheText').textContent='Tap to start';document.getElementById('breatheSub').textContent='4-4-4-4';}
+
+/* ── BUILD ── */
+function buildColorPickers(){['colorPicker','modalColorPicker'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.innerHTML='';noteColors.forEach((c,i)=>{const d=document.createElement('div');d.className='color-dot'+(i===0?' selected':'');d.style.background=c.hex;d.title=c.l;d.onclick=()=>{selectedNoteColor=c.hex;['colorPicker','modalColorPicker'].forEach(pid=>{const p=document.getElementById(pid);if(p)p.querySelectorAll('.color-dot').forEach((dd,di)=>dd.classList.toggle('selected',di===i));});};el.appendChild(d);});});}
+function buildChecklist(){const el=document.getElementById('checklistEl');if(!el)return;el.innerHTML='';checklist.forEach((item,i)=>{const d=document.createElement('div');d.className='glass-sm check-item';d.style.borderRadius='14px';d.innerHTML=`<div class="check-box" id="chk${i}">✓</div><div><div class="check-title">${item.t}</div><div class="check-desc">${item.d}</div></div>`;d.onclick=()=>d.classList.toggle('done');el.appendChild(d);});}
+function buildGrounding(){const el=document.getElementById('groundingGrid');if(!el)return;el.innerHTML='';groundingSteps.forEach((s,i)=>{const c=document.createElement('div');c.className='glass routine-card';c.style.animationDelay=(i*0.06)+'s';c.innerHTML=`<div class="routine-num">${s.num}</div><div class="routine-step">${s.s}</div><div class="routine-title" style="font-size:1.5rem">${s.e} ${s.s}</div><div class="routine-body">${s.p}<br><span style="opacity:0.5;font-style:italic;font-size:0.78rem;">e.g. ${s.x}</span></div><span class="routine-tag">${s.num} things</span>`;el.appendChild(c);});}
+
+/* ── WALL ── */
+function loadWallNotes(){if(!currentUser.isAnon){try{stickyNotes=JSON.parse(localStorage.getItem('sageNotes_'+currentUser.email)||'[]');}catch(e){}}}
+function saveWallNotes(){if(!currentUser.isAnon)localStorage.setItem('sageNotes_'+currentUser.email,JSON.stringify(stickyNotes));updateStats();}
+function renderWall(){const c=document.getElementById('wallCanvas');c.querySelectorAll('.sticky-note').forEach(n=>n.remove());document.getElementById('wallEmptyHint').style.display=stickyNotes.length===0?'flex':'none';stickyNotes.forEach((n,i)=>createNoteEl(n,i));}
+function createNoteEl(note,idx){const c=document.getElementById('wallCanvas');const el=document.createElement('div');el.className='sticky-note';el.style.cssText=`left:${note.x}px;top:${note.y}px;background:${note.color};transform:rotate(${note.rot}deg);animation-delay:${idx*0.04}s;`;el.innerHTML=`<div class="sticky-pin"></div><div class="sticky-header"><span class="sticky-ts">${note.date}</span><button class="sticky-delete" onclick="deleteNote(${note.id},event)">✕</button></div><div class="sticky-body">${note.text}</div>`;makeDraggable(el,note.id);c.appendChild(el);}
+function openAddNote(){document.getElementById('addNoteModal').classList.add('open');document.getElementById('noteText').focus();}
+function closeAddNote(){document.getElementById('addNoteModal').classList.remove('open');document.getElementById('noteText').value='';}
+function addNote(){const t=document.getElementById('noteText').value.trim();if(!t){showToast('Write something first 💬');return;}const c=document.getElementById('wallCanvas');const x=60+Math.random()*(Math.max(c.offsetWidth-280,100));const y=40+Math.random()*(Math.max(c.offsetHeight-200,100));stickyNotes.push({id:Date.now(),text:t,color:selectedNoteColor,x:Math.round(x),y:Math.round(y),rot:parseFloat(((Math.random()-0.5)*8).toFixed(2)),date:new Date().toLocaleDateString('en-US',{month:'short',day:'numeric'})});saveWallNotes();renderWall();closeAddNote();showToast('Note pinned 📌');}
+function deleteNote(id,e){e.stopPropagation();stickyNotes=stickyNotes.filter(n=>n.id!==id);saveWallNotes();renderWall();}
+function clearWall(){if(!stickyNotes.length)return;stickyNotes=[];saveWallNotes();renderWall();showToast('Wall cleared 🌿');}
+function makeDraggable(el,noteId){let sX,sY,sL,sT,drag=false;el.addEventListener('mousedown',e=>{if(e.target.classList.contains('sticky-delete'))return;drag=true;sX=e.clientX;sY=e.clientY;sL=parseInt(el.style.left);sT=parseInt(el.style.top);el.style.zIndex=100;e.preventDefault();});document.addEventListener('mousemove',e=>{if(!drag)return;const nL=Math.max(0,sL+e.clientX-sX),nT=Math.max(0,sT+e.clientY-sY);el.style.left=nL+'px';el.style.top=nT+'px';const n=stickyNotes.find(n=>n.id===noteId);if(n){n.x=nL;n.y=nT;}});document.addEventListener('mouseup',()=>{if(drag){drag=false;el.style.zIndex='';saveWallNotes();}});el.addEventListener('touchstart',e=>{if(e.target.classList.contains('sticky-delete'))return;const t=e.touches[0];drag=true;sX=t.clientX;sY=t.clientY;sL=parseInt(el.style.left);sT=parseInt(el.style.top);el.style.zIndex=100;},{passive:true});document.addEventListener('touchmove',e=>{if(!drag)return;const t=e.touches[0];el.style.left=Math.max(0,sL+t.clientX-sX)+'px';el.style.top=Math.max(0,sT+t.clientY-sY)+'px';},{passive:true});document.addEventListener('touchend',()=>{if(drag){drag=false;el.style.zIndex='';saveWallNotes();}});}
+
+/* ── CHAT ── */
+let currentStranger = null;
+
+function pickRandomStranger(){
+  return userPool[Math.floor(Math.random()*userPool.length)];
+}
+
+function setStrangerUI(user){
+  currentStranger = user;
+  document.getElementById('strangerAv').textContent = user.emoji;
+  document.getElementById('strangerName').textContent = user.name;
+  document.getElementById('strangerLabel').textContent = user.name;
+  document.getElementById('strangerHandleLabel').textContent = user.handle;
+  // update add friend button state
+  const btn = document.getElementById('addFriendBtn');
+  if(myFriends.find(f=>f.id===user.id)){
+    btn.textContent='✓ Friends';btn.style.opacity='0.6';btn.style.cursor='default';
+  } else if(sentRequests.find(f=>f.id===user.id)){
+    btn.textContent='Requested ✓';btn.style.opacity='0.6';btn.style.cursor='default';
+  } else {
+    btn.textContent='🫂 Add Friend';btn.style.opacity='1';btn.style.cursor='pointer';
+  }
+}
+
+function initChat(){chatConnected=false;document.getElementById('chatStatus').textContent='Searching…';document.getElementById('strangerInner').style.display='none';document.getElementById('connOverlay').classList.remove('done');const cnt=parseInt(localStorage.getItem('sageSessions')||'0')+1;localStorage.setItem('sageSessions',cnt);setTimeout(()=>{document.getElementById('connOverlay').classList.add('done');document.getElementById('strangerInner').style.display='flex';chatConnected=true;setStrangerUI(pickRandomStranger());document.getElementById('chatStatus').textContent='Connected';showToast('Connected with a stranger 🌿');setTimeout(()=>addChatMsg('them',"hi… is anyone there?"),2500);},2000);}
+
+function nextStranger(){chatConnected=false;currentStranger=null;document.getElementById('strangerInner').style.display='none';document.getElementById('connOverlay').classList.remove('done');document.getElementById('chatStatus').textContent='Searching…';document.getElementById('chatMsgs').innerHTML='<div style="font-size:0.72rem;color:var(--tm);text-align:center;padding:0.4rem;" id="chatEmpty">Messages appear here</div>';setTimeout(()=>{document.getElementById('connOverlay').classList.add('done');document.getElementById('strangerInner').style.display='flex';chatConnected=true;setStrangerUI(pickRandomStranger());document.getElementById('chatStatus').textContent='Connected';showToast('New connection 🌿');},1800);}
+
+function addStrangerAsFriend(){
+  if(!currentStranger){showToast('No one connected yet');return;}
+  const already = myFriends.find(f=>f.id===currentStranger.id);
+  const sent = sentRequests.find(f=>f.id===currentStranger.id);
+  if(already){showToast('Already friends with '+currentStranger.name+' 💚');return;}
+  if(sent){showToast('Request already sent!');return;}
+  sentRequests.push(currentStranger);
+  const btn = document.getElementById('addFriendBtn');
+  btn.textContent='Requested ✓';btn.style.opacity='0.6';btn.style.cursor='default';
+  showToast('Friend request sent to '+currentStranger.name+' 🫂');
+  // simulate auto-accept
+  setTimeout(()=>{
+    sentRequests = sentRequests.filter(u=>u.id!==currentStranger.id);
+    if(!myFriends.find(u=>u.id===currentStranger.id)){
+      myFriends.push(currentStranger);
+      updateFriendCountBadge();
+      btn.textContent='✓ Friends';
+      showToast(currentStranger.name+' accepted your request 💚');
+    }
+  },3000);
+}
+
+function viewStrangerProfile(){
+  if(!currentStranger){showToast('No one connected yet');return;}
+  openUserProfile(currentStranger);
+}
+async function toggleCam(){isCamOn=!isCamOn;if(isCamOn){try{videoStream=await navigator.mediaDevices.getUserMedia({video:true,audio:true});const v=document.getElementById('myVid');v.srcObject=videoStream;v.style.display='block';document.getElementById('myAnonAv').style.display='none';document.getElementById('btnCam').classList.add('active');document.getElementById('camIcon').textContent='🎥';document.getElementById('camLbl').textContent='Hide me';document.getElementById('myVislbl').textContent='visible';}catch(e){isCamOn=false;showToast('Camera unavailable 🌫️');}}else{if(videoStream){videoStream.getTracks().forEach(t=>t.stop());videoStream=null;}document.getElementById('myVid').style.display='none';document.getElementById('myAnonAv').style.display='flex';document.getElementById('btnCam').classList.remove('active');document.getElementById('camIcon').textContent='📷';document.getElementById('camLbl').textContent='Show me';document.getElementById('myVislbl').textContent='hidden';showToast('You are hidden 🌫️');}}
+function toggleMic(){isMicMuted=!isMicMuted;if(videoStream)videoStream.getAudioTracks().forEach(t=>t.enabled=!isMicMuted);document.getElementById('micIcon').textContent=isMicMuted?'🔇':'🎙️';document.getElementById('micLbl').textContent=isMicMuted?'Unmute':'Mute';document.getElementById('btnMic').classList.toggle('active',isMicMuted);showToast(isMicMuted?'Muted 🔇':'Mic on 🎙️');}
+function addChatMsg(from,text){const c=document.getElementById('chatMsgs');const e=document.getElementById('chatEmpty');if(e)e.remove();const d=document.createElement('div');d.className='cmsg '+from;d.innerHTML=`<span class="cmsg-b">${text}</span>`;c.appendChild(d);c.scrollTop=c.scrollHeight;}
+function sendMsg(){const i=document.getElementById('chatInput'),t=i.value.trim();if(!t)return;addChatMsg('me',t);i.value='';if(chatConnected)setTimeout(()=>addChatMsg('them',chatResponses[Math.floor(Math.random()*chatResponses.length)]),900+Math.random()*1100);}
+
+/* ══════════════════════════════════════════════════
+   MEDIA UPLOAD
+══════════════════════════════════════════════════ */
+let pendingMedia = []; // [{type:'image'|'video', dataUrl, name}]
+
+function handleMediaUpload(input, type) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+
+  // max 4 total media items
+  const remaining = 4 - pendingMedia.length;
+  const toAdd = files.slice(0, remaining);
+  if (files.length > remaining) showToast(`Max 4 media items — added ${toAdd.length}`);
+
+  toAdd.forEach(file => {
+    // size guard: 20MB
+    if (file.size > 20 * 1024 * 1024) { showToast(`${file.name} is too large (max 20MB)`); return; }
+    const reader = new FileReader();
+    reader.onload = e => {
+      pendingMedia.push({ type, dataUrl: e.target.result, name: file.name });
+      renderMediaPreview();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // reset so same file can be re-added
+}
+
+function renderMediaPreview() {
+  const strip = document.getElementById('mediaPreviewStrip');
+  const countEl = document.getElementById('mediaCount');
+  if (!strip) return;
+
+  if (pendingMedia.length === 0) {
+    strip.style.display = 'none';
+    strip.innerHTML = '';
+    if (countEl) countEl.textContent = '';
+    return;
+  }
+
+  strip.style.display = 'flex';
+  strip.innerHTML = '';
+  pendingMedia.forEach((m, i) => {
+    const thumb = document.createElement('div');
+    thumb.className = 'media-thumb';
+    if (m.type === 'image') {
+      thumb.innerHTML = `<img src="${m.dataUrl}" alt="preview"><div class="media-type-badge">IMG</div>`;
+    } else {
+      thumb.innerHTML = `<video src="${m.dataUrl}" muted></video><div class="media-type-badge">▶ VID</div>`;
+    }
+    const rm = document.createElement('div');
+    rm.className = 'media-thumb-remove';
+    rm.textContent = '✕';
+    rm.onclick = () => { pendingMedia.splice(i, 1); renderMediaPreview(); };
+    thumb.appendChild(rm);
+    strip.appendChild(thumb);
+  });
+  if (countEl) countEl.textContent = pendingMedia.length > 0 ? `${pendingMedia.length}/4` : '';
+}
+
+function openLightbox(src, type) {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lightboxImg');
+  const vid = document.getElementById('lightboxVid');
+  if (type === 'image') {
+    img.src = src; img.style.display = 'block';
+    vid.style.display = 'none'; vid.pause && vid.pause();
+  } else {
+    vid.src = src; vid.style.display = 'block';
+    img.style.display = 'none';
+  }
+  lb.classList.add('open');
+}
+
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  lb.classList.remove('open');
+  const vid = document.getElementById('lightboxVid');
+  vid.pause && vid.pause();
+  vid.src = ''; document.getElementById('lightboxImg').src = '';
+}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);}
+
+/* ══════════════════════════════════════════════════
+   FEED
+══════════════════════════════════════════════════ */
+const feedTags=['#anxiety','#healing','#overthinking','#gratitude','#loneliness','#progress','#grief','#hope','#selflove','#unsaid'];
+const trendingData=[
+  {tag:'#anxiety',count:'1.2k'},
+  {tag:'#healing',count:'984'},
+  {tag:'#overthinking',count:'876'},
+  {tag:'#loneliness',count:'741'},
+  {tag:'#gratitude',count:'602'},
+  {tag:'#selflove',count:'540'},
+];
+const sidebarQuotes=[
+  {q:"You don't have to be positive all the time. It's perfectly okay to feel sad, angry, annoyed, frustrated, scared and anxious.",a:"Lori Deschene"},
+  {q:"Healing is not linear. Be patient with yourself.",a:"Unknown"},
+  {q:"The bravest thing I ever did was continuing my life when I wanted to die.",a:"Juliette Lewis"},
+  {q:"There is hope, even when your brain tells you there isn't.",a:"John Green"},
+  {q:"You are allowed to be both a masterpiece and a work in progress simultaneously.",a:"Sophia Bush"},
+];
+const offTopicKeywords=['politics','sport','sports','football','basketball','movie','movies','music','celebrity','celebrities','game','gaming','recipe','food','news','weather','stock','crypto','bitcoin','tiktok','instagram','youtube','netflix','shopping','sale','discount','buy','sell','investment','travel','vacation','holiday'];
+const seedPosts=[
+  {id:1,author:'softwillow',emoji:'🌿',time:'2 min ago',tag:'#anxiety',body:"today was really hard. my chest felt tight all morning and i couldn't figure out why. does anyone else just wake up anxious for no reason? i did the breathing exercise from the routine page and it helped a little. wanted to share in case someone else is feeling this.",likes:24,echos:6,comments:[{a:'moonpetal',e:'🌸',t:"yes, this happens to me almost every day. you're not alone 💚"},{a:'quietstorm',e:'🌊',t:"breathing helps me too. hang in there 🍃"}]},
+  {id:2,author:'stillwater_s',emoji:'🌙',time:'18 min ago',tag:'#healing',body:"it's been 6 months since i started therapy and i finally cried today — not from sadness, but from realizing how far i've come. healing is so quiet and slow and then suddenly you notice it all at once.\n\nif you're in it right now: keep going. it's working, even when you can't feel it.",likes:87,echos:31,comments:[{a:'ferngrove',e:'🌱',t:"this made me tear up. thank you for sharing this 🌿"},{a:'anon_seeker',e:'🌫️',t:"i needed to read this today. genuinely thank you."}]},
+  {id:3,author:'unnamed_leaf',emoji:'🍃',time:'41 min ago',tag:'#loneliness',body:"i have 200 followers on instagram and feel completely alone. i don't know how to explain it to people who haven't felt it. it's not about numbers or attention — it's about whether anyone actually *sees* you. sage feels different. even typing into this void feels less empty.",likes:112,echos:44,comments:[]},
+  {id:4,author:'pebble_path',emoji:'🌸',time:'1 hr ago',tag:'#gratitude',body:"small wins log:\n✦ made my bed\n✦ ate breakfast (!!!)\n✦ replied to one message i'd been avoiding\n✦ sat in the sun for 5 minutes\n\nsome days that's everything. and that's enough.",likes:156,echos:62,comments:[{a:'softwillow',e:'🌿',t:"bed made = full win in my book 🌿"}]},
+  {id:5,author:'anon_6741',emoji:'🌫️',time:'2 hr ago',tag:'#overthinking',body:"my brain at 2am: 'remember that thing you said in 2018 at that party?' thanks, i hate it here. how do you all actually get it to stop? i've tried journaling and it helps temporarily but the loop always comes back.",likes:43,echos:12,comments:[{a:'stillwater_s',e:'🌙',t:"the 5-4-3-2-1 technique on the routine page genuinely broke the loop for me once"},{a:'moonpetal',e:'🌸',t:"i put on a really boring podcast at low volume. occupies just enough brain"}]},
+];
+
+let feedPosts=[...seedPosts];
+let activeFilter='all';
+let selectedTag=null;
+let nextPostId=100;
+
+function toggleComposer(){
+  const wrap=document.getElementById('composerWrap');
+  const btn=document.getElementById('writeBtn');
+  const isOpen=wrap.style.display!=='none';
+  wrap.style.display=isOpen?'none':'block';
+  btn.classList.toggle('open',!isOpen);
+  btn.innerHTML=isOpen?'<span>✦</span> Write something':'<span>✕</span> Close';
+  if(!isOpen) setTimeout(()=>document.getElementById('composerText')?.focus(),50);
+}
+
+function initFeed(){
+  buildTagPills();
+  buildFilterBar();
+  buildTrendingTags();
+  setSidebarQuote();
+  renderFeed();
+  document.getElementById('composerAv').textContent=currentUser.emoji;
+  document.getElementById('feedOnlineCount').textContent=Math.floor(200+Math.random()*100)+' in the clearing';
+  pendingMedia=[];
+  renderMediaPreview();
+  // always start with composer hidden
+  const wrap=document.getElementById('composerWrap');
+  const btn=document.getElementById('writeBtn');
+  if(wrap) wrap.style.display='none';
+  if(btn){btn.classList.remove('open');btn.innerHTML='<span>✦</span> Write something';}
+}
+
+function buildTagPills(){
+  const el=document.getElementById('tagPills');
+  el.innerHTML='';
+  feedTags.forEach(tag=>{
+    const b=document.createElement('button');
+    b.className='tag-pill-sel';b.textContent=tag;
+    b.onclick=()=>{
+      b.classList.toggle('active');
+      selectedTag=b.classList.contains('active')?tag:null;
+      el.querySelectorAll('.tag-pill-sel').forEach(x=>{if(x!==b)x.classList.remove('active');});
+    };
+    el.appendChild(b);
+  });
+}
+
+function buildFilterBar(){
+  const el=document.getElementById('feedFilterBar');
+  el.innerHTML='';
+  const filters=[{k:'all',l:'✦ All'},{k:'#anxiety',l:'#anxiety'},{k:'#healing',l:'#healing'},{k:'#loneliness',l:'#loneliness'},{k:'#gratitude',l:'#gratitude'},{k:'#overthinking',l:'#overthinking'},{k:'#hope',l:'#hope'},{k:'#selflove',l:'#selflove'}];
+  filters.forEach(f=>{
+    const b=document.createElement('button');
+    b.className='ffilter'+(f.k==='all'?' active':'');
+    b.textContent=f.l;
+    b.onclick=()=>{
+      activeFilter=f.k;
+      el.querySelectorAll('.ffilter').forEach(x=>x.classList.remove('active'));
+      b.classList.add('active');
+      renderFeed();
+    };
+    el.appendChild(b);
+  });
+}
+
+function buildTrendingTags(){
+  const el=document.getElementById('trendingTags');
+  el.innerHTML='';
+  trendingData.forEach((item,i)=>{
+    const d=document.createElement('div');
+    d.className='trending-item';
+    d.innerHTML=`<span class="tr-rank">${i+1}</span><span class="tr-tag">${item.tag}</span><span class="tr-count">${item.count} posts</span>`;
+    d.onclick=()=>{
+      activeFilter=item.tag;
+      document.querySelectorAll('.ffilter').forEach(x=>{x.classList.toggle('active',x.textContent===item.tag);});
+      renderFeed();
+    };
+    el.appendChild(d);
+  });
+}
+
+function setSidebarQuote(){
+  const q=sidebarQuotes[Math.floor(Math.random()*sidebarQuotes.length)];
+  document.getElementById('sidebarQuote').textContent='"'+q.q+'"';
+  document.getElementById('sidebarQuoteAuthor').textContent='— '+q.a;
+}
+
+function updateCharCount(){
+  const v=document.getElementById('composerText').value;
+  const rem=500-v.length;
+  const el=document.getElementById('charCount');
+  el.textContent=rem;
+  el.classList.toggle('warn',rem<60);
+}
+
+function isOffTopic(text){
+  const lower=text.toLowerCase();
+  return offTopicKeywords.some(k=>lower.includes(k));
+}
+
+function submitPost(){
+  const text=document.getElementById('composerText').value.trim();
+  const rn=document.getElementById('rejectNotice');
+  rn.style.display='none';
+
+  if(!text && pendingMedia.length===0){showToast('Write something or add a photo/video first 🌿');return;}
+  if(text && text.length<10 && pendingMedia.length===0){showToast('A little more, please 💭');return;}
+
+  if(text && isOffTopic(text)){
+    rn.style.display='block';
+    rn.innerHTML=`<div class="reject-notice"><span style="font-size:1.1rem;flex-shrink:0;">🌿</span><div><strong style="display:block;margin-bottom:0.2rem;">Off-topic content</strong>This post seems unrelated to mental wellness or feelings. Sage's feed is only for emotional experiences, reflections, and support. Please share something from the heart.</div></div>`;
+    setTimeout(()=>rn.style.display='none',6000);
+    return;
+  }
+
+  const tag=selectedTag||feedTags[Math.floor(Math.random()*4)];
+  const newPost={
+    id:nextPostId++,
+    author:currentUser.isAnon?'anon_'+Math.floor(1000+Math.random()*9000):currentUser.name.toLowerCase().replace(/\s/g,'_'),
+    emoji:currentUser.emoji,
+    time:'just now',
+    tag,
+    body:text,
+    media:[...pendingMedia],
+    likes:0,echos:0,comments:[],isOwn:true
+  };
+  feedPosts.unshift(newPost);
+  document.getElementById('composerText').value='';
+  document.getElementById('charCount').textContent='500';
+  document.getElementById('tagPills').querySelectorAll('.tag-pill-sel').forEach(x=>x.classList.remove('active'));
+  selectedTag=null;
+  pendingMedia=[];
+  renderMediaPreview();
+  activeFilter='all';
+  document.querySelectorAll('.ffilter').forEach((x,i)=>{x.classList.toggle('active',i===0);});
+  renderFeed();
+  showToast('Shared with the clearing 🕊️');
+  // close composer
+  const wrap=document.getElementById('composerWrap');
+  const btn=document.getElementById('writeBtn');
+  if(wrap) wrap.style.display='none';
+  if(btn){btn.classList.remove('open');btn.innerHTML='<span>✦</span> Write something';}
+}
+
+function renderFeed(){
+  const container=document.getElementById('feedPosts');
+  container.innerHTML='';
+  let visible=activeFilter==='all'?feedPosts:feedPosts.filter(p=>p.tag===activeFilter);
+  if(!visible.length){
+    container.innerHTML=`<div style="text-align:center;padding:3rem 1rem;opacity:0.4;"><div style="font-size:2.5rem;margin-bottom:0.8rem;">🌫️</div><div style="font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;">Nothing here yet</div><div style="font-size:0.8rem;margin-top:0.3rem;">Be the first to share in this space</div></div>`;
+    return;
+  }
+  visible.forEach((p,i)=>{
+    const card=createPostCard(p,i);
+    container.appendChild(card);
+  });
+}
+
+function createPostCard(post,idx){
+  const div=document.createElement('div');
+  div.className='post-card';
+  div.style.animationDelay=(idx*0.04)+'s';
+  div.id='post-'+post.id;
+
+  const isLong=post.body.length>220;
+  const cmtsHtml=(post.comments||[]).map(c=>`
+    <div class="comment-item">
+      <div class="cmt-av">${c.e}</div>
+      <div class="cmt-bubble"><div class="cmt-author" onclick="openProfileByAuthor('${c.a}')" style="cursor:pointer;">@${c.a}</div><div class="cmt-text">${escHtml(c.t)}</div></div>
+    </div>`).join('');
+
+  // Build media html
+  const media = post.media||[];
+  let mediaHtml = '';
+  if(media.length > 0){
+    const cls = media.length === 1 ? 'solo' : 'duo';
+    mediaHtml = `<div class="post-media">${media.map(m=>`
+      <div class="post-media-item ${cls}" onclick="openLightbox('${m.dataUrl}','${m.type}')">
+        ${m.type==='image'
+          ? `<img src="${m.dataUrl}" alt="post image" loading="lazy">`
+          : `<video src="${m.dataUrl}" controls onclick="event.stopPropagation()" preload="metadata"></video>`
+        }
+      </div>`).join('')}</div>`;
+  }
+
+  div.innerHTML=`
+    <div class="post-head">
+      <div class="post-av">${post.emoji}</div>
+      <div class="post-meta">
+        <div class="post-author" onclick="openProfileByAuthor('${post.author}')" style="cursor:pointer;" title="View profile">@${post.author}${post.isOwn?' <span style="font-size:0.65rem;color:rgba(155,245,158,0.6);font-weight:500;">· you</span>':''}</div>
+        <div class="post-time">${post.time}</div>
+      </div>
+      <div class="post-tag-badge">${post.tag}</div>
+    </div>
+    ${post.body ? `<div class="post-body${isLong?' collapsed':''}" id="body-${post.id}">${escHtml(post.body)}</div>` : ''}
+    ${isLong?`<button class="read-more" onclick="toggleExpand(${post.id},this)">Read more</button>`:''}
+    ${mediaHtml}
+    <div class="post-actions">
+      <button class="act-btn" id="like-${post.id}" onclick="toggleLike(${post.id})">
+        <span class="act-icon">🤍</span><span id="likeCount-${post.id}">${post.likes}</span>
+      </button>
+      <button class="act-btn" id="echo-${post.id}" onclick="toggleEcho(${post.id})">
+        <span class="act-icon">🌀</span><span id="echoCount-${post.id}">${post.echos}</span>
+      </button>
+      <button class="act-btn" onclick="toggleComments(${post.id})">
+        <span class="act-icon">💬</span><span>${(post.comments||[]).length}</span>
+      </button>
+    </div>
+    <div class="comments-section" id="cmts-${post.id}">
+      <div id="cmtList-${post.id}">${cmtsHtml}</div>
+      <div class="cmt-input-row">
+        <div class="cmt-av">${currentUser.emoji}</div>
+        <input class="cmt-in" id="cmtIn-${post.id}" placeholder="Reply with kindness…" onkeydown="if(event.key==='Enter')addComment(${post.id})">
+        <button class="cmt-send" onclick="addComment(${post.id})">↩</button>
+      </div>
+    </div>
+  `;
+  return div;
+}
+
+function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');}
+
+function toggleExpand(id,btn){
+  const body=document.getElementById('body-'+id);
+  const collapsed=body.classList.toggle('collapsed');
+  btn.textContent=collapsed?'Read more':'Show less';
+}
+
+function toggleLike(id){
+  const post=feedPosts.find(p=>p.id===id);if(!post)return;
+  const btn=document.getElementById('like-'+id);
+  const wasLiked=btn.classList.contains('liked');
+  post.likes+=wasLiked?-1:1;
+  btn.classList.toggle('liked',!wasLiked);
+  btn.querySelector('.act-icon').textContent=wasLiked?'🤍':'❤️';
+  document.getElementById('likeCount-'+id).textContent=post.likes;
+}
+
+function toggleEcho(id){
+  const post=feedPosts.find(p=>p.id===id);if(!post)return;
+  const btn=document.getElementById('echo-'+id);
+  const wasEchoed=btn.classList.contains('echoed');
+  post.echos+=wasEchoed?-1:1;
+  btn.classList.toggle('echoed',!wasEchoed);
+  document.getElementById('echoCount-'+id).textContent=post.echos;
+  if(!wasEchoed)showToast('Echoed into the clearing 🌀');
+}
+
+function toggleComments(id){
+  const el=document.getElementById('cmts-'+id);
+  el.classList.toggle('open');
+  if(el.classList.contains('open'))document.getElementById('cmtIn-'+id)?.focus();
+}
+
+function addComment(id){
+  const input=document.getElementById('cmtIn-'+id);
+  const text=input.value.trim();
+  if(!text)return;
+  if(isOffTopic(text)){showToast('Please keep comments on-topic 🌿');return;}
+  const post=feedPosts.find(p=>p.id===id);if(!post)return;
+  const cmt={a:currentUser.isAnon?'anon_'+Math.floor(1000+Math.random()*9000):currentUser.name.toLowerCase().replace(/\s/g,'_'),e:currentUser.emoji,t:text};
+  post.comments.push(cmt);
+  const list=document.getElementById('cmtList-'+id);
+  const d=document.createElement('div');d.className='comment-item';
+  d.innerHTML=`<div class="cmt-av">${cmt.e}</div><div class="cmt-bubble"><div class="cmt-author">@${cmt.a}</div><div class="cmt-text">${escHtml(cmt.t)}</div></div>`;
+  list.appendChild(d);
+  input.value='';
+  // update comment count badge
+  const actBtns=document.querySelectorAll(`#post-${id} .act-btn`);
+  if(actBtns[2])actBtns[2].querySelector('span:last-child').textContent=post.comments.length;
+}
+
+
+/* ══════════════════════════════════════════════════
+   FRIENDS SYSTEM
+══════════════════════════════════════════════════ */
+
+// Data stores
+let myFriends = [];
+let pendingRequests = [];
+let sentRequests = [];
+
+// Messaging stores
+let conversations = {};    // { userId: { msgs:[{from,text,time,type,src}], unread:0 } }
+let activeChatUser = null;
+
+const userPool = [
+  {id:'u1', name:'softwillow',    emoji:'🌿', handle:'@softwillow',   bio:'finding peace in small moments',   mutuals:3},
+  {id:'u2', name:'moonpetal',     emoji:'🌸', handle:'@moonpetal',    bio:'healing slowly but healing',        mutuals:1},
+  {id:'u3', name:'stillwater_s',  emoji:'🌙', handle:'@stillwater_s', bio:'6 months into therapy 💚',          mutuals:2},
+  {id:'u4', name:'unnamed_leaf',  emoji:'🍃', handle:'@unnamed_leaf', bio:'quiet and trying',                  mutuals:0},
+  {id:'u5', name:'pebble_path',   emoji:'🌸', handle:'@pebble_path',  bio:'small wins every day',             mutuals:4},
+  {id:'u6', name:'quietstorm',    emoji:'🌊', handle:'@quietstorm',   bio:'anxiety warrior',                  mutuals:1},
+  {id:'u7', name:'ferngrove',     emoji:'🌱', handle:'@ferngrove',    bio:'growth is non-linear',             mutuals:2},
+  {id:'u8', name:'anon_seeker',   emoji:'🌫️', handle:'@anon_seeker',  bio:'still figuring it out',            mutuals:0},
+];
+
+const dmAutoReplies = [
+  "I know that feeling 🌿","That means a lot, thank you.","I've been thinking the same thing.",
+  "It's good to have someone who understands.","You're not alone in this 💚","How are you doing today, really?",
+  "I appreciate you reaching out.","Sending you calm and strength 🍃","That takes real courage to say.",
+  "Yeah… I feel that too.","Thank you for trusting me with this.","I'm here 🌿"
+];
+
+function seedFriendData() {
+  if (pendingRequests.length === 0 && myFriends.length === 0) {
+    pendingRequests = [
+      {id:'u2', name:'moonpetal', emoji:'🌸', handle:'@moonpetal', bio:'healing slowly but healing', msg:'Hey, I saw your post about anxiety. We seem similar 🌿'},
+      {id:'u6', name:'quietstorm', emoji:'🌊', handle:'@quietstorm', bio:'anxiety warrior', msg:'Would love to connect here 💚'},
+    ];
+    updateReqBadge();
+  }
+}
+
+function initFriends() {
+  seedFriendData();
+  switchFTab('friends');
+  renderSuggestions();
+  updateFriendCountBadge();
+  renderConvList();
+}
+
+function switchFTab(tab) {
+  ['friends','requests','search','messages'].forEach(t => {
+    const btn = document.getElementById('ftab-'+t);
+    if(btn) btn.classList.toggle('active', t===tab);
+    const panel = document.getElementById('fpanel-'+t);
+    if(panel) panel.style.display = t===tab ? 'block' : 'none';
+  });
+  if (tab==='friends')  renderFriendsPanel();
+  if (tab==='requests') renderRequestsPanel();
+  if (tab==='search')   renderDiscoverPanel();
+  if (tab==='messages') { openMessagingView(); }
+}
+
+/* ══════════════════════════════════════════════════
+   MESSAGING VIEW
+══════════════════════════════════════════════════ */
+function openMessagingView(preOpenUserId) {
+  const mv = document.getElementById('messagingView');
+  if(!mv) return;
+  mv.style.display = 'flex';
+  renderConvList();
+  if(preOpenUserId) {
+    const user = myFriends.find(f=>f.id===preOpenUserId) || userPool.find(u=>u.id===preOpenUserId);
+    if(user) openConversation(user);
+  } else if(activeChatUser) {
+    openConversation(activeChatUser);
+  }
+}
+
+function closeMessaging() {
+  const mv = document.getElementById('messagingView');
+  if(mv) mv.style.display = 'none';
+  // go back to friends tab
+  const ftab = document.getElementById('ftab-friends');
+  if(ftab) { switchFTab('friends'); }
+}
+
+function getOrCreateConv(userId) {
+  if(!conversations[userId]) conversations[userId] = { msgs:[], unread:0 };
+  return conversations[userId];
+}
+
+function renderConvList(filter) {
+  const el = document.getElementById('convListItems');
+  if(!el) return;
+
+  // All friends that have conversations OR all friends
+  const allConvUsers = myFriends.map(f => ({
+    user: f,
+    conv: conversations[f.id] || { msgs:[], unread:0 }
+  }));
+
+  // Sort: convs with messages first (by last msg time), then others
+  allConvUsers.sort((a,b) => {
+    const aLen = a.conv.msgs.length, bLen = b.conv.msgs.length;
+    if(aLen && !bLen) return -1;
+    if(!aLen && bLen) return 1;
+    return 0;
+  });
+
+  const filtered = filter
+    ? allConvUsers.filter(({user}) => user.name.toLowerCase().includes(filter.toLowerCase()) || user.handle.includes(filter))
+    : allConvUsers;
+
+  if(!filtered.length) {
+    el.innerHTML = `<div style="padding:2rem 1rem;text-align:center;opacity:0.45;">
+      <div style="font-size:2rem;margin-bottom:0.5rem;">🌱</div>
+      <div style="font-size:0.82rem;color:rgba(35,80,38,0.7);">${myFriends.length===0?'Add friends to start messaging':'No results'}</div>
+    </div>`;
+    return;
+  }
+
+  el.innerHTML = filtered.map(({user, conv}) => {
+    const lastMsg = conv.msgs[conv.msgs.length-1];
+    const preview = lastMsg
+      ? (lastMsg.from==='me' ? 'You: ' : '') + (lastMsg.type==='image' ? '🖼️ Image' : lastMsg.text.slice(0,40)+(lastMsg.text.length>40?'…':''))
+      : 'Say hello 👋';
+    const timeStr = lastMsg ? formatMsgTime(lastMsg.ts) : '';
+    const isActive = activeChatUser?.id === user.id;
+    const unread = conv.unread || 0;
+    return `<div class="conv-item${isActive?' active':''}" onclick="openConversation_by_id('${user.id}')">
+      <div class="conv-av">
+        ${user.emoji}
+        ${unread>0 ? '<div class="conv-unread-dot"></div>' : ''}
+      </div>
+      <div class="conv-info">
+        <div class="conv-name">${user.name}</div>
+        <div class="conv-preview">${preview}</div>
+      </div>
+      <div class="conv-meta">
+        ${timeStr ? `<div class="conv-time">${timeStr}</div>` : ''}
+        ${unread>0 ? `<div class="conv-unread-count">${unread}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Update unread badge on messages tab
+  const totalUnread = Object.values(conversations).reduce((s,c)=>s+(c.unread||0),0);
+  const badge = document.getElementById('unreadBadge');
+  const navBadge = document.getElementById('friendReqBadge');
+  if(badge){ badge.textContent=totalUnread; badge.style.display=totalUnread>0?'inline':'none'; }
+}
+
+function filterConvList(val) { renderConvList(val); }
+
+function openConversation_by_id(userId) {
+  const user = myFriends.find(f=>f.id===userId) || userPool.find(u=>u.id===userId);
+  if(user) openConversation(user);
+}
+
+function openConversation(user) {
+  activeChatUser = user;
+  const conv = getOrCreateConv(user.id);
+  conv.unread = 0;
+
+  // Update header
+  document.getElementById('chatHeaderAv').textContent = user.emoji;
+  document.getElementById('chatHeaderName').textContent = user.name;
+  const statuses = ['🟢 Active now','🟡 Active recently','⚪ Offline'];
+  document.getElementById('chatHeaderStatus').textContent = statuses[Math.floor(Math.random()*3)];
+  document.getElementById('typingName').textContent = user.name;
+
+  // Show active chat, hide empty
+  document.getElementById('chatEmpty_msg').style.display = 'none';
+  document.getElementById('activeChat').style.display = 'flex';
+
+  // Render messages
+  renderMessages(user.id);
+  renderConvList(document.getElementById('msgSearchInput')?.value);
+
+  // Focus input
+  setTimeout(() => document.getElementById('msgInput')?.focus(), 100);
+}
+
+function renderMessages(userId) {
+  const el = document.getElementById('msgArea');
+  if(!el) return;
+  const conv = getOrCreateConv(userId);
+  const user = myFriends.find(f=>f.id===userId) || userPool.find(u=>u.id===userId);
+  if(!conv.msgs.length) {
+    el.innerHTML = `<div style="text-align:center;padding:2rem;opacity:0.38;">
+      <div style="font-size:2.2rem;margin-bottom:0.6rem;">${user?.emoji||'🌿'}</div>
+      <div style="font-family:'Cormorant Garamond',serif;font-size:1.1rem;font-weight:300;color:rgba(18,52,21,0.7);">Start your conversation</div>
+      <div style="font-size:0.78rem;color:rgba(40,80,43,0.5);margin-top:0.3rem;">Say something kind 🌿</div>
+    </div>`;
+    return;
+  }
+
+  let lastDate = '';
+  el.innerHTML = conv.msgs.map((msg, i) => {
+    const msgDate = msg.ts ? new Date(msg.ts).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}) : 'Today';
+    const showDate = msgDate !== lastDate;
+    lastDate = msgDate;
+    const timeStr = msg.ts ? new Date(msg.ts).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'}) : '';
+    const isMe = msg.from === 'me';
+    const avatarHtml = !isMe ? `<div class="msg-av-sm">${user?.emoji||'🌿'}</div>` : '';
+    const bubbleContent = msg.type === 'image'
+      ? `<img src="${msg.src}" class="msg-img" onclick="openLightbox('${msg.src}','image')">`
+      : escHtml(msg.text);
+    return `
+      ${showDate ? `<div class="date-divider">${msgDate}</div>` : ''}
+      <div class="msg-bubble-wrap ${isMe?'me':'them'}">
+        ${avatarHtml}
+        <div>
+          <div class="msg-bubble">${bubbleContent}</div>
+          <div class="msg-time">${timeStr}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendMessage() {
+  if(!activeChatUser) return;
+  const input = document.getElementById('msgInput');
+  const text = input.value.trim();
+  if(!text) return;
+  _pushMsg(activeChatUser.id, { from:'me', text, ts: Date.now(), type:'text' });
+  input.value = '';
+  input.style.height = 'auto';
+  scheduleAutoReply(activeChatUser.id);
+}
+
+function handleMsgKey(e) {
+  if(e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+function autoResizeMsgInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+}
+
+function sendMsgImage(input) {
+  if(!activeChatUser || !input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    _pushMsg(activeChatUser.id, { from:'me', src: e.target.result, ts: Date.now(), type:'image', text:'[image]' });
+    scheduleAutoReply(activeChatUser.id);
+  };
+  reader.readAsDataURL(input.files[0]);
+  input.value = '';
+}
+
+function _pushMsg(userId, msg) {
+  const conv = getOrCreateConv(userId);
+  conv.msgs.push(msg);
+  if(msg.from !== 'me') conv.unread = (conv.unread||0) + 1;
+  renderMessages(userId);
+  renderConvList(document.getElementById('msgSearchInput')?.value||'');
+  const el = document.getElementById('msgArea');
+  if(el) el.scrollTop = el.scrollHeight;
+}
+
+function scheduleAutoReply(userId) {
+  const user = myFriends.find(f=>f.id===userId) || userPool.find(u=>u.id===userId);
+  const delay = 1200 + Math.random()*1800;
+  // show typing
+  setTimeout(()=>{
+    const ind = document.getElementById('typingIndicator');
+    if(ind && activeChatUser?.id===userId) ind.style.display='block';
+    const el = document.getElementById('msgArea');
+    if(el) el.scrollTop = el.scrollHeight;
+  }, delay - 600);
+  setTimeout(()=>{
+    const ind = document.getElementById('typingIndicator');
+    if(ind) ind.style.display='none';
+    const reply = dmAutoReplies[Math.floor(Math.random()*dmAutoReplies.length)];
+    _pushMsg(userId, { from:'them', text:reply, ts:Date.now(), type:'text' });
+    // badge if messaging view not open or different chat
+    if(activeChatUser?.id !== userId || document.getElementById('messagingView')?.style.display==='none') {
+      const conv = getOrCreateConv(userId);
+      conv.unread = (conv.unread||0)+1;
+      renderConvList();
+    }
+  }, delay);
+}
+
+function formatMsgTime(ts) {
+  if(!ts) return '';
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = now - d;
+  if(diff < 60000) return 'now';
+  if(diff < 3600000) return Math.floor(diff/60000)+'m';
+  if(diff < 86400000) return d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+/* ── Legacy openDM (now routes to messaging view) ── */
+function openDM(userId, name, emoji) {
+  const user = myFriends.find(f=>f.id===userId) || userPool.find(u=>u.id===userId) || {id:userId,name,emoji,handle:'@'+name,bio:'',mutuals:0};
+  // Make sure they're in friends if not already (for DM from chat page)
+  if(!myFriends.find(f=>f.id===userId)) myFriends.push(user);
+  openMessagingView(userId);
+}
+function closeDM() { closeMessaging(); }
+function sendDM() { sendMessage(); }
+
+/* ── Friends management ── */
+function renderFriendsPanel() {
+  const el = document.getElementById('fpanel-friends');
+  if(!el) return;
+  if (myFriends.length === 0) {
+    el.innerHTML = `<div class="friends-empty"><div class="fe-icon">🌱</div><div class="fe-title">No friends yet</div><div class="fe-sub">Search for people or check Discover to find connections</div></div>`;
+    return;
+  }
+  el.innerHTML = myFriends.map(u => {
+    const conv = conversations[u.id];
+    const unread = conv?.unread||0;
+    return `<div class="friend-card" id="fc-${u.id}">
+      <div class="friend-av" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">${u.emoji}</div>
+      <div class="friend-info" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">
+        <div class="friend-name">${u.name}</div>
+        <div class="friend-handle">${u.handle}</div>
+        <div class="friend-status">${u.bio || 'no bio yet'}</div>
+      </div>
+      <div class="friend-actions">
+        <button class="f-btn f-btn-primary" style="position:relative;" onclick="openDM('${u.id}','${u.name}','${u.emoji}')">
+          💬 Message${unread>0?` <span style="background:#4caf60;color:#fff;font-size:0.6rem;border-radius:50px;padding:1px 5px;margin-left:3px;">${unread}</span>`:''}
+        </button>
+        <button class="f-btn f-btn-danger" onclick="removeFriend('${u.id}')">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderRequestsPanel() {
+  const el = document.getElementById('fpanel-requests');
+  if(!el) return;
+  if (pendingRequests.length === 0) {
+    el.innerHTML = `<div class="friends-empty"><div class="fe-icon">🌫️</div><div class="fe-title">No pending requests</div><div class="fe-sub">When someone sends you a friend request, it'll appear here</div></div>`;
+    return;
+  }
+  el.innerHTML = pendingRequests.map(u => `
+    <div class="friend-card" id="req-${u.id}">
+      <div class="friend-av" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">${u.emoji}</div>
+      <div class="friend-info" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">
+        <div class="friend-name">${u.name}</div>
+        <div class="friend-handle">${u.handle}</div>
+        <div class="friend-status" style="font-style:normal;">"${u.msg || 'Wants to connect with you'}"</div>
+      </div>
+      <div class="friend-actions">
+        <button class="f-btn f-btn-accept" onclick="acceptRequest('${u.id}')">✓ Accept</button>
+        <button class="f-btn f-btn-danger" onclick="declineRequest('${u.id}')">✕ Decline</button>
+      </div>
+    </div>`).join('');
+}
+
+function renderDiscoverPanel(query) {
+  const el = document.getElementById('fpanel-search');
+  if(!el) return;
+  const myIds = new Set([...myFriends.map(u=>u.id), ...sentRequests.map(u=>u.id), ...pendingRequests.map(u=>u.id)]);
+  let pool = userPool.filter(u => !myIds.has(u.id));
+  if (query && query.trim()) {
+    const q = query.toLowerCase();
+    pool = pool.filter(u => u.name.includes(q) || u.handle.includes(q) || u.emoji.includes(q));
+  }
+  if (pool.length === 0) {
+    el.innerHTML = `<div class="friends-empty"><div class="fe-icon">🔍</div><div class="fe-title">No results found</div><div class="fe-sub">Try a different name or emoji</div></div>`;
+    return;
+  }
+  el.innerHTML = pool.map(u => {
+    const sent = sentRequests.find(s=>s.id===u.id);
+    return `
+    <div class="friend-card" id="disc-${u.id}">
+      <div class="friend-av" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">${u.emoji}</div>
+      <div class="friend-info" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">
+        <div class="friend-name">${u.name}</div>
+        <div class="friend-handle">${u.handle}</div>
+        <div class="friend-status">${u.mutuals > 0 ? u.mutuals+' mutual feelings shared' : u.bio}</div>
+      </div>
+      <div class="friend-actions">
+        ${sent
+          ? `<button class="f-btn f-btn-secondary" disabled style="opacity:0.6;cursor:default;">Requested ✓</button>`
+          : `<button class="f-btn f-btn-primary" onclick="sendRequest('${u.id}')">+ Add Friend</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function findUser(id) {
+  return myFriends.find(f=>f.id===id) || userPool.find(u=>u.id===id) || null;
+}
+
+function searchFriends(q) {
+  const tab = document.querySelector('.ftab.active')?.id?.replace('ftab-','');
+  if (tab === 'friends') {
+    const lq = q.toLowerCase();
+    document.querySelectorAll('#fpanel-friends .friend-card').forEach(card => {
+      const name = card.querySelector('.friend-name')?.textContent?.toLowerCase() || '';
+      card.style.display = (!q || name.includes(lq)) ? '' : 'none';
+    });
+  } else {
+    switchFTab('search');
+    renderDiscoverPanel(q);
+  }
+}
+
+function sendRequest(userId) {
+  const user = userPool.find(u=>u.id===userId);
+  if(!user) return;
+  sentRequests.push(user);
+  showToast('Friend request sent to '+user.name+' 🌿');
+  renderDiscoverPanel(document.getElementById('friendSearch')?.value);
+  renderSuggestions();
+  setTimeout(()=>{
+    sentRequests = sentRequests.filter(u=>u.id!==userId);
+    if(!myFriends.find(u=>u.id===userId)) {
+      myFriends.push(user);
+      updateFriendCountBadge();
+      renderConvList();
+      showToast(user.name+' accepted your request 💚');
+    }
+  }, 3000);
+}
+
+function acceptRequest(userId) {
+  const user = pendingRequests.find(u=>u.id===userId);
+  if(!user) return;
+  pendingRequests = pendingRequests.filter(u=>u.id!==userId);
+  myFriends.push(user);
+  updateReqBadge();
+  updateFriendCountBadge();
+  renderConvList();
+  showToast(user.name+' is now your friend 💚');
+  renderRequestsPanel();
+  renderSuggestions();
+}
+
+function declineRequest(userId) {
+  pendingRequests = pendingRequests.filter(u=>u.id!==userId);
+  updateReqBadge();
+  showToast('Request declined');
+  renderRequestsPanel();
+}
+
+function removeFriend(userId) {
+  const user = myFriends.find(u=>u.id===userId);
+  myFriends = myFriends.filter(u=>u.id!==userId);
+  if(activeChatUser?.id===userId) { activeChatUser=null; }
+  updateFriendCountBadge();
+  renderConvList();
+  showToast((user?.name||'Friend')+' removed');
+  renderFriendsPanel();
+  renderSuggestions();
+}
+
+function updateReqBadge() {
+  const n = pendingRequests.length;
+  const badge = document.getElementById('reqCount');
+  const navBadge = document.getElementById('friendReqBadge');
+  if(badge) { badge.textContent=n; badge.style.display=n>0?'inline':'none'; }
+  if(navBadge) navBadge.style.display = n>0 ? 'block' : 'none';
+}
+
+function updateFriendCountBadge() {
+  const n = myFriends.length;
+  const badge = document.getElementById('friendCount');
+  if(badge) { badge.textContent=n; badge.style.background=n>0?'rgba(100,155,103,0.7)':'rgba(150,190,153,0.4)'; }
+}
+
+function renderSuggestions() {
+  const el = document.getElementById('friendSuggestions');
+  if(!el) return;
+  const myIds = new Set([...myFriends.map(u=>u.id), ...sentRequests.map(u=>u.id), ...pendingRequests.map(u=>u.id)]);
+  const suggestions = userPool.filter(u=>!myIds.has(u.id) && u.mutuals>0).slice(0,4);
+  if(!suggestions.length){el.innerHTML='<div style="font-size:0.78rem;color:rgba(40,80,43,0.5);text-align:center;padding:1rem;">All caught up! 🌿</div>';return;}
+  el.innerHTML = suggestions.map(u=>`
+    <div class="suggest-card" style="margin-bottom:0.65rem;">
+      <div class="suggest-av" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">${u.emoji}</div>
+      <div class="suggest-info" onclick="openUserProfile(findUser('${u.id}'))" style="cursor:pointer;">
+        <div class="suggest-name">${u.name}</div>
+        <div class="suggest-why">${u.mutuals} mutual posts shared</div>
+      </div>
+      <button class="f-btn f-btn-primary" style="font-size:0.7rem;padding:0.3rem 0.7rem;" onclick="sendRequest('${u.id}')">+</button>
+    </div>`).join('');
+}
+
+function openDMByName(name) {
+  const friend = myFriends.find(f=>f.name===name);
+  if(friend) openDM(friend.id, friend.name, friend.emoji);
+  else showToast('Add '+name+' as a friend first 🌿');
+}
+
+
+/* ══════════════════════════════════════════════════
+   USER PROFILE VIEWER
+══════════════════════════════════════════════════ */
+let currentProfileUser = null;
+
+function openUserProfile(user) {
+  currentProfileUser = user;
+  document.getElementById('upAv').textContent = user.emoji;
+  document.getElementById('upName').textContent = user.name;
+  document.getElementById('upHandle').textContent = user.handle || ('@'+user.name);
+  document.getElementById('upBio').textContent = user.bio || 'No bio yet.';
+  document.getElementById('upPosts').textContent = Math.floor(Math.random()*40+3);
+  document.getElementById('upFriends').textContent = (user.mutuals||0)*2 + Math.floor(Math.random()*8);
+  document.getElementById('upDays').textContent = Math.floor(Math.random()*120+5);
+
+  // Recent posts from feed or mocked
+  const userPosts = feedPosts.filter(p=>p.author===user.name||p.author===user.name.toLowerCase().replace(/\s/g,'_')).slice(0,3);
+  const listEl = document.getElementById('upPosts_list');
+  if(userPosts.length){
+    listEl.innerHTML = userPosts.map(p=>`
+      <div style="padding:0.7rem 0.9rem;background:rgba(210,235,212,0.38);border:1px solid rgba(255,255,255,0.48);border-radius:12px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">
+          <span style="font-size:0.68rem;background:rgba(130,175,133,0.45);border:1px solid rgba(255,255,255,0.45);border-radius:50px;padding:0.18rem 0.65rem;color:rgba(12,42,15,0.88);font-weight:600;">${p.tag}</span>
+          <span style="font-size:0.65rem;color:rgba(55,95,58,0.55);">${p.time}</span>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(14,44,17,0.88);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${p.body}</div>
+      </div>`).join('');
+  } else {
+    const tags = ['#healing','#anxiety','#hope','#gratitude','#loneliness'];
+    const snippets = [
+      'the quiet mornings have been helping lately…',
+      'some days feel lighter than others, today is one of them',
+      'still working on it, but progress is progress 🌱',
+      'grateful for this space to just breathe and be honest',
+      'overthinking again but writing it out helps'
+    ];
+    const mockPosts = Array.from({length:2},(_,i)=>({
+      tag: tags[Math.floor(Math.random()*tags.length)],
+      time: (Math.floor(Math.random()*5)+1)+'d ago',
+      body: snippets[Math.floor(Math.random()*snippets.length)]
+    }));
+    listEl.innerHTML = mockPosts.map(p=>`
+      <div style="padding:0.7rem 0.9rem;background:rgba(210,235,212,0.38);border:1px solid rgba(255,255,255,0.48);border-radius:12px;">
+        <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.3rem;">
+          <span style="font-size:0.68rem;background:rgba(130,175,133,0.45);border:1px solid rgba(255,255,255,0.45);border-radius:50px;padding:0.18rem 0.65rem;color:rgba(12,42,15,0.88);font-weight:600;">${p.tag}</span>
+          <span style="font-size:0.65rem;color:rgba(55,95,58,0.55);">${p.time}</span>
+        </div>
+        <div style="font-size:0.8rem;color:rgba(14,44,17,0.88);line-height:1.6;">${p.body}</div>
+      </div>`).join('');
+  }
+
+  // Add Friend / Message button states
+  const addBtn = document.getElementById('upAddBtn');
+  const msgBtn = document.getElementById('upMsgBtn');
+  if(myFriends.find(f=>f.id===user.id)){
+    addBtn.textContent='✓ Already Friends';addBtn.style.opacity='0.6';addBtn.style.cursor='default';
+    msgBtn.style.display='flex';
+  } else if(sentRequests.find(f=>f.id===user.id)){
+    addBtn.textContent='Requested ✓';addBtn.style.opacity='0.6';addBtn.style.cursor='default';
+    msgBtn.style.display='none';
+  } else {
+    addBtn.textContent='🫂 Add Friend';addBtn.style.opacity='1';addBtn.style.cursor='pointer';
+    msgBtn.style.display='none';
+  }
+
+  const modal = document.getElementById('userProfileModal');
+  modal.style.display='flex';
+  setTimeout(()=>modal.style.opacity='1',10);
+}
+
+function closeUserProfile(){
+  const modal = document.getElementById('userProfileModal');
+  modal.style.display='none';
+  currentProfileUser=null;
+}
+
+function addFriendFromProfile(){
+  if(!currentProfileUser) return;
+  const already = myFriends.find(f=>f.id===currentProfileUser.id);
+  const sent = sentRequests.find(f=>f.id===currentProfileUser.id);
+  if(already||sent) return;
+  sentRequests.push(currentProfileUser);
+  const btn=document.getElementById('upAddBtn');
+  btn.textContent='Requested ✓';btn.style.opacity='0.6';btn.style.cursor='default';
+  showToast('Friend request sent to '+currentProfileUser.name+' 🫂');
+  setTimeout(()=>{
+    sentRequests=sentRequests.filter(u=>u.id!==currentProfileUser.id);
+    if(!myFriends.find(u=>u.id===currentProfileUser.id)){
+      myFriends.push(currentProfileUser);
+      updateFriendCountBadge();
+      btn.textContent='✓ Already Friends';
+      document.getElementById('upMsgBtn').style.display='flex';
+      showToast(currentProfileUser.name+' accepted your request 💚');
+    }
+  },3000);
+}
+
+function msgFromProfile(){
+  if(!currentProfileUser) return;
+  closeUserProfile();
+  navigate('friends');
+  setTimeout(()=>{
+    openDM(currentProfileUser.id, currentProfileUser.name, currentProfileUser.emoji);
+  },150);
+}
+
+// Open profile from feed post author click
+function openProfileByAuthor(authorName){
+  // Check own profile
+  if(currentUser.name.toLowerCase().replace(/\s/g,'_')===authorName||currentUser.name===authorName){
+    navigate('profile');return;
+  }
+  // Find in userPool
+  const user = userPool.find(u=>u.name===authorName||u.name.toLowerCase().replace(/\s/g,'_')===authorName);
+  if(user){ openUserProfile(user); return; }
+  // Build a generic profile for unknown authors
+  const generic={id:'anon_'+authorName,name:authorName,emoji:'🌫️',handle:'@'+authorName,bio:'Anonymous sage member.',mutuals:0};
+  openUserProfile(generic);
+}
+
+// Close modal on backdrop click
+document.getElementById('userProfileModal')?.addEventListener('click', function(e){
+  if(e.target===this) closeUserProfile();
+});
+
+</script>
+</body>
+</html>
